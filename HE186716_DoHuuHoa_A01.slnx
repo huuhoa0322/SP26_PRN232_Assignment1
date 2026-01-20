@@ -1,1 +1,4 @@
-<Solution />
+<Solution>
+  <Project Path="HE186716_DoHuuHoa_SE1884-NET_A01_BE/HE186716_DoHuuHoa_SE1884-NET_A01_BE.csproj" />
+  <Project Path="HE186716_DoHuuHoa_SE1884-NET_A01_FE/HE186716_DoHuuHoa_SE1884-NET_A01_FE.csproj" />
+</Solution>

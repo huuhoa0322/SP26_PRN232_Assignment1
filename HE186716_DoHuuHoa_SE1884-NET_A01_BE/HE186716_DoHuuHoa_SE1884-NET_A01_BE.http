@@ -1,0 +1,6 @@
+@HE186716_DoHuuHoa_SE1884_NET_A01_BE_HostAddress = http://localhost:5184
+
+GET {{HE186716_DoHuuHoa_SE1884_NET_A01_BE_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
