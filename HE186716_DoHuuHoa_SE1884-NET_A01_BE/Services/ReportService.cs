@@ -1,3 +1,4 @@
+using System.Text;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Repositories;
 
@@ -62,4 +63,47 @@ public class ReportService : IReportService
             AuthorStats = authorStats
         };
     }
+
+    public async Task<byte[]> ExportToCsvAsync(ReportFilterDto filter)
+    {
+        var statistics = await GetStatisticsAsync(filter);
+        var sb = new StringBuilder();
+
+        // Add BOM for Excel to recognize UTF-8
+        // Header - Summary
+        sb.AppendLine("=== NEWS ARTICLE STATISTICS REPORT ===");
+        sb.AppendLine();
+        sb.AppendLine($"Report Period,{(statistics.StartDate?.ToString("yyyy-MM-dd") ?? "All")},{(statistics.EndDate?.ToString("yyyy-MM-dd") ?? "All")}");
+        sb.AppendLine($"Total Articles,{statistics.TotalArticles}");
+        sb.AppendLine($"Active Articles,{statistics.ActiveArticles}");
+        sb.AppendLine($"Inactive Articles,{statistics.InactiveArticles}");
+        sb.AppendLine();
+
+        // Category Statistics
+        sb.AppendLine("=== CATEGORY STATISTICS ===");
+        sb.AppendLine("Category ID,Category Name,Total Articles,Active,Inactive");
+        foreach (var cat in statistics.CategoryStats)
+        {
+            sb.AppendLine($"{cat.CategoryId},\"{cat.CategoryName}\",{cat.ArticleCount},{cat.ActiveCount},{cat.InactiveCount}");
+        }
+        sb.AppendLine();
+
+        // Author Statistics
+        sb.AppendLine("=== AUTHOR STATISTICS ===");
+        sb.AppendLine("Account ID,Author Name,Total Articles,Active,Inactive");
+        foreach (var author in statistics.AuthorStats)
+        {
+            sb.AppendLine($"{author.AccountId},\"{author.AccountName}\",{author.ArticleCount},{author.ActiveCount},{author.InactiveCount}");
+        }
+
+        // Return with UTF-8 BOM for Excel compatibility
+        var preamble = Encoding.UTF8.GetPreamble();
+        var content = Encoding.UTF8.GetBytes(sb.ToString());
+        var result = new byte[preamble.Length + content.Length];
+        preamble.CopyTo(result, 0);
+        content.CopyTo(result, preamble.Length);
+
+        return result;
+    }
 }
+
