@@ -1,23 +1,41 @@
-﻿@page
-@model IndexModel
+@page
+@model HE186716_DoHuuHoa_SE1884_NET_A01_FE.Pages.News.SearchModel
 @{
-    ViewData["Title"] = "Trang chủ";
+    ViewData["Title"] = "Tìm kiếm tin tức";
 }
 
-<div class="text-center mb-4">
-    <h1 class="display-4">FU News Management</h1>
-    <p class="lead">Hệ thống quản lý tin tức FPT University</p>
+<h2>Tìm kiếm tin tức</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label class="form-label">Từ khóa</label>
+                <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="Nhập từ khóa..." />
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Danh mục</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat.CategoryId" selected="@(Model.CategoryId == cat.CategoryId)">@cat.CategoryName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Tìm kiếm</button>
+            </div>
+        </form>
+    </div>
 </div>
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4>Tin tức mới nhất</h4>
-    <span class="badge bg-secondary">@Model.Articles.Count bài viết</span>
-</div>
+<p class="text-muted">Tìm thấy <strong>@Model.Articles.Count</strong> kết quả</p>
 
 @if (Model.Articles.Count == 0)
 {
     <div class="alert alert-info">
-        Chưa có tin tức nào.
+        Không tìm thấy kết quả phù hợp.
     </div>
 }
 else

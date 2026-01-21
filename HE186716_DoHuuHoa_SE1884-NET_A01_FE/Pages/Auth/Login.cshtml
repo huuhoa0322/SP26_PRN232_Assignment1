@@ -1,0 +1,46 @@
+@page
+@model HE186716_DoHuuHoa_SE1884_NET_A01_FE.Pages.Auth.LoginModel
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-5">
+        <h2 class="text-center mb-4">Đăng nhập</h2>
+        
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="alert alert-danger">
+                @Model.ErrorMessage
+            </div>
+        }
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" asp-for="Email" class="form-control" placeholder="Nhập email..." required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input type="password" asp-for="Password" class="form-control" placeholder="Nhập mật khẩu..." required />
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Đăng nhập</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-body small">
+                <strong>Tài khoản test:</strong>
+                <ul class="mb-0 mt-2">
+                    <li><strong>Admin:</strong> admin@FUNewsManagementSystem.org / @@abc123@@</li>
+                    <li><strong>Staff/Lecturer:</strong> Xem trong database</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>

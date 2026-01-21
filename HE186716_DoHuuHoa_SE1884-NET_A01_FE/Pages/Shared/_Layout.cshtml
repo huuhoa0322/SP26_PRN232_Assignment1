@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HE186716_DoHuuHoa_SE1884_NET_A01_FE</title>
+    <title>@ViewData["Title"] - FU News Management</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/HE186716_DoHuuHoa_SE1884_NET_A01_FE.styles.css" asp-append-version="true" />
@@ -12,7 +12,7 @@
     <header>
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">HE186716_DoHuuHoa_SE1884_NET_A01_FE</a>
+                <a class="navbar-brand" asp-page="/Index">FU News</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
                         aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -20,11 +20,40 @@
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
+                            <a class="nav-link text-dark" asp-page="/Index">Trang chủ</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
+                            <a class="nav-link text-dark" asp-page="/News/Search">Tìm kiếm</a>
                         </li>
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (Context.Session.GetString("UserName") != null)
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
+                                    @Context.Session.GetString("UserName")
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    @if (Context.Session.GetString("IsAdmin") == "True")
+                                    {
+                                        <li><a class="dropdown-item" asp-page="/Admin/Index">Dashboard</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    else if (Context.Session.GetString("Role") == "1")
+                                    {
+                                        <li><a class="dropdown-item" asp-page="/Staff/Index">Quản lý</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                    }
+                                    <li><a class="dropdown-item" asp-page="/Auth/Logout">Đăng xuất</a></li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-page="/Auth/Login">Đăng nhập</a>
+                            </li>
+                        }
                     </ul>
                 </div>
             </div>
@@ -36,12 +65,9 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - HE186716_DoHuuHoa_SE1884_NET_A01_FE - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
+    <footer class="border-top footer text-muted text-center py-2">
+        <small>&copy; 2026 - FU News Management</small>
     </footer>
-
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

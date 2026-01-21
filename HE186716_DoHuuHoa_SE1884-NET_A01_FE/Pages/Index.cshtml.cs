@@ -1,20 +1,22 @@
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using HE186716_DoHuuHoa_SE1884_NET_A01_FE.Models;
+using HE186716_DoHuuHoa_SE1884_NET_A01_FE.Services;
 
-namespace HE186716_DoHuuHoa_SE1884_NET_A01_FE.Pages
+namespace HE186716_DoHuuHoa_SE1884_NET_A01_FE.Pages;
+
+public class IndexModel : PageModel
 {
-    public class IndexModel : PageModel
+    private readonly ApiService _apiService;
+
+    public List<NewsArticleDto> Articles { get; set; } = new();
+
+    public IndexModel(ApiService apiService)
     {
-        private readonly ILogger<IndexModel> _logger;
+        _apiService = apiService;
+    }
 
-        public IndexModel(ILogger<IndexModel> logger)
-        {
-            _logger = logger;
-        }
-
-        public void OnGet()
-        {
-
-        }
+    public async Task OnGetAsync()
+    {
+        Articles = await _apiService.GetActiveNewsAsync();
     }
 }

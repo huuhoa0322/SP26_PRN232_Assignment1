@@ -1,0 +1,103 @@
+@page "{id}"
+@model HE186716_DoHuuHoa_SE1884_NET_A01_FE.Pages.News.DetailsModel
+@{
+    ViewData["Title"] = Model.Article?.NewsTitle ?? "Chi tiết tin tức";
+}
+
+@if (Model.Article == null)
+{
+    <div class="alert alert-warning">
+        Không tìm thấy bài viết. <a asp-page="/Index">Quay lại trang chủ</a>
+    </div>
+}
+else
+{
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Index">Trang chủ</a></li>
+            <li class="breadcrumb-item"><a asp-page="/News/Search">Tin tức</a></li>
+            <li class="breadcrumb-item active">Chi tiết</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <article>
+                <div class="mb-3">
+                    <span class="badge bg-primary">@Model.Article.CategoryName</span>
+                    @if (Model.Article.NewsStatus == true)
+                    {
+                        <span class="badge bg-success">Active</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Inactive</span>
+                    }
+                </div>
+                
+                <h1>@Model.Article.NewsTitle</h1>
+                <p class="lead text-muted">@Model.Article.Headline</p>
+                
+                <p class="text-muted small">
+                    Tác giả: <strong>@Model.Article.CreatedByName</strong> | 
+                    Ngày đăng: @Model.Article.CreatedDate?.ToString("dd/MM/yyyy HH:mm")
+                    @if (!string.IsNullOrEmpty(Model.Article.NewsSource))
+                    {
+                        <span>| Nguồn: @Model.Article.NewsSource</span>
+                    }
+                </p>
+
+                @if (Model.Article.Tags.Any())
+                {
+                    <div class="mb-3">
+                        @foreach (var tag in Model.Article.Tags)
+                        {
+                            <a asp-page="/News/Search" asp-route-keyword="@tag.TagName" class="badge bg-light text-dark text-decoration-none">
+                                #@tag.TagName
+                            </a>
+                        }
+                    </div>
+                }
+
+                <hr />
+
+                <div class="article-content">
+                    @Html.Raw(Model.Article.NewsContent?.Replace("\n", "<br/>") ?? "")
+                </div>
+            </article>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    Bài viết liên quan
+                </div>
+                <div class="card-body">
+                    @if (Model.RelatedArticles.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Không có bài viết liên quan.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var related in Model.RelatedArticles)
+                            {
+                                <li class="mb-2 pb-2 border-bottom">
+                                    <a asp-page="/News/Details" asp-route-id="@related.NewsArticleId" class="text-decoration-none">
+                                        @related.NewsTitle
+                                    </a>
+                                    <br />
+                                    <small class="text-muted">@related.CreatedDate?.ToString("dd/MM/yyyy")</small>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-page="/Index" class="btn btn-outline-secondary">← Quay lại trang chủ</a>
+    </div>
+}
