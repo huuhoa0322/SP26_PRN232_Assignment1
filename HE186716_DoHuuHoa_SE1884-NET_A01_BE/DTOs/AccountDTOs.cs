@@ -51,3 +51,19 @@ public class UpdateAccountDto
     [Range(1, 2, ErrorMessage = "Role must be 1 (Staff) or 2 (Lecturer)")]
     public int AccountRole { get; set; }
 }
+
+// DTO for changing password with verification
+public class ChangePasswordDto
+{
+    [Required(ErrorMessage = "Current password is required")]
+    public string CurrentPassword { get; set; } = null!;
+
+    [Required(ErrorMessage = "New password is required")]
+    [StringLength(70, MinimumLength = 3, ErrorMessage = "Password must be between 3 and 70 characters")]
+    public string NewPassword { get; set; } = null!;
+
+    [Required(ErrorMessage = "Confirm password is required")]
+    [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+    public string ConfirmPassword { get; set; } = null!;
+}
+

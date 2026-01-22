@@ -89,4 +89,15 @@ public class TagController : ControllerBase
 
         return Ok(new { message = result.Message });
     }
+
+    /// <summary>
+    /// Get all articles that use a specific tag (REQ 4.5)
+    /// </summary>
+    [HttpGet("{id}/articles")]
+    public async Task<ActionResult<IEnumerable<NewsArticleDto>>> GetArticlesByTag(int id)
+    {
+        var articles = await _tagService.GetArticlesByTagAsync(id);
+        return Ok(articles);
+    }
 }
+

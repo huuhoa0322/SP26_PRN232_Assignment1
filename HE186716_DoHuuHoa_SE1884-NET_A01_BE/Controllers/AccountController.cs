@@ -97,4 +97,21 @@ public class AccountController : ControllerBase
 
         return Ok(new { message = result.Message });
     }
+
+    /// <summary>
+    /// Change account password (requires current password verification)
+    /// </summary>
+    [HttpPut("{id}/change-password")]
+    public async Task<ActionResult> ChangePassword(short id, [FromBody] ChangePasswordDto dto)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+
+        var result = await _accountService.ChangePasswordAsync(id, dto);
+        if (!result.Success)
+            return BadRequest(new { message = result.Message });
+
+        return Ok(new { message = result.Message });
+    }
 }
+

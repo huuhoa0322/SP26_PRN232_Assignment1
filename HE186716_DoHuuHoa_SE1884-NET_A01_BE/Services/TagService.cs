@@ -73,6 +73,29 @@ public class TagService : ITagService
         return (true, "Tag deleted successfully");
     }
 
+    public async Task<IEnumerable<NewsArticleDto>> GetArticlesByTagAsync(int tagId)
+    {
+        var tag = await _tagRepository.GetByIdAsync(tagId);
+        if (tag == null || tag.NewsArticles == null)
+            return Enumerable.Empty<NewsArticleDto>();
+
+        return tag.NewsArticles.Select(article => new NewsArticleDto
+        {
+            NewsArticleId = article.NewsArticleId,
+            NewsTitle = article.NewsTitle,
+            Headline = article.Headline,
+            CreatedDate = article.CreatedDate,
+            NewsContent = article.NewsContent,
+            NewsSource = article.NewsSource,
+            CategoryId = article.CategoryId,
+            CategoryName = article.Category?.CategoryName,
+            NewsStatus = article.NewsStatus,
+            CreatedById = article.CreatedById,
+            CreatedByName = article.CreatedBy?.AccountName,
+            Tags = new List<TagDto>()
+        }).ToList();
+    }
+
     private TagDto MapToDto(Tag tag)
     {
         return new TagDto
@@ -84,3 +107,4 @@ public class TagService : ITagService
         };
     }
 }
+

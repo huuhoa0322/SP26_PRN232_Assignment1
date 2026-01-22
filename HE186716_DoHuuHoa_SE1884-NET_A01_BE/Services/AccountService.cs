@@ -92,6 +92,23 @@ public class AccountService : IAccountService
         return true;
     }
 
+    public async Task<(bool Success, string Message)> ChangePasswordAsync(short id, ChangePasswordDto dto)
+    {
+        var account = await _accountRepository.GetByIdAsync(id);
+        if (account == null)
+            return (false, "Account not found");
+
+        // Verify current password
+        if (account.AccountPassword != dto.CurrentPassword)
+            return (false, "Current password is incorrect");
+
+        // Update password
+        account.AccountPassword = dto.NewPassword;
+        await _accountRepository.UpdateAsync(account);
+
+        return (true, "Password changed successfully");
+    }
+
     private AccountDto MapToDto(SystemAccount account)
     {
         return new AccountDto

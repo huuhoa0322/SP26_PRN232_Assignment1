@@ -12,4 +12,5 @@ public interface IAccountService
     Task<AccountDto?> UpdateAsync(short id, UpdateAccountDto dto);
     Task<(bool Success, string Message)> DeleteAsync(short id);
     Task<bool> EmailExistsAsync(string email, short? excludeId = null);
+    Task<(bool Success, string Message)> ChangePasswordAsync(short id, ChangePasswordDto dto);
 }

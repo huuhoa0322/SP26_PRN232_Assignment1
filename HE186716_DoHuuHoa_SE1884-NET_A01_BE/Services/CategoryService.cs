@@ -57,6 +57,13 @@ public class CategoryService : ICategoryService
         if (category == null)
             return null;
 
+        // REQ 4.3: Check if ParentCategoryID is being changed and category has articles
+        if (dto.ParentCategoryId != category.ParentCategoryId)
+        {
+            if (await _categoryRepository.HasArticlesAsync(id))
+                throw new InvalidOperationException("Cannot change ParentCategoryID for a category that already has articles");
+        }
+
         category.CategoryName = dto.CategoryName;
         category.CategoryDesciption = dto.CategoryDesciption;
         category.ParentCategoryId = dto.ParentCategoryId;

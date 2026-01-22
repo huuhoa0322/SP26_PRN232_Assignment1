@@ -10,4 +10,5 @@ public interface ITagService
     Task<TagDto> CreateAsync(CreateTagDto dto);
     Task<TagDto?> UpdateAsync(int id, UpdateTagDto dto);
     Task<(bool Success, string Message)> DeleteAsync(int id);
+    Task<IEnumerable<NewsArticleDto>> GetArticlesByTagAsync(int tagId);
 }
