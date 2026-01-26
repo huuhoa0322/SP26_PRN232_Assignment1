@@ -58,14 +58,14 @@ public class ReportService : IReportService
             new StatusStatDto
             {
                 Status = true,
-                StatusName = "Active",
+                StatusName = "Hoạt động",
                 ArticleCount = articlesList.Count(a => a.NewsStatus == true),
                 LatestCreatedDate = articlesList.Where(a => a.NewsStatus == true).Max(a => a.CreatedDate)
             },
             new StatusStatDto
             {
                 Status = false,
-                StatusName = "Inactive",
+                StatusName = "Không hoạt động",
                 ArticleCount = articlesList.Count(a => a.NewsStatus == false),
                 LatestCreatedDate = articlesList.Where(a => a.NewsStatus == false).Any() 
                     ? articlesList.Where(a => a.NewsStatus == false).Max(a => a.CreatedDate) 
@@ -97,8 +97,8 @@ public class ReportService : IReportService
         sb.AppendLine();
         sb.AppendLine($"Thời gian báo cáo,{(statistics.StartDate?.ToString("yyyy-MM-dd") ?? "Tất cả")},{(statistics.EndDate?.ToString("yyyy-MM-dd") ?? "Tất cả")}");
         sb.AppendLine($"Tổng bài viết,{statistics.TotalArticles}");
-        sb.AppendLine($"Bài viết Active,{statistics.ActiveArticles}");
-        sb.AppendLine($"Bài viết Inactive,{statistics.InactiveArticles}");
+        sb.AppendLine($"Bài viết Hoạt động,{statistics.ActiveArticles}");
+        sb.AppendLine($"Bài viết Không hoạt động,{statistics.InactiveArticles}");
         sb.AppendLine();
 
         // Status Statistics
@@ -112,7 +112,7 @@ public class ReportService : IReportService
 
         // Category Statistics
         sb.AppendLine("=== THỐNG KÊ THEO DANH MỤC ==="); 
-        sb.AppendLine("Mã danh mục,Tên danh mục,Tổng bài viết,Active,Inactive");
+        sb.AppendLine("Mã danh mục,Tên danh mục,Tổng bài viết,Hoạt động,Không hoạt động");
         foreach (var cat in statistics.CategoryStats)
         {
             sb.AppendLine($"{cat.CategoryId},\"{cat.CategoryName}\",{cat.ArticleCount},{cat.ActiveCount},{cat.InactiveCount}");
@@ -121,7 +121,7 @@ public class ReportService : IReportService
 
         // Author Statistics
         sb.AppendLine("=== THỐNG KÊ THEO TÁC GIẢ ===");
-        sb.AppendLine("Mã tác giả,Tên tác giả,Tổng bài viết,Active,Inactive");
+        sb.AppendLine("Mã tác giả,Tên tác giả,Tổng bài viết,Hoạt động,Không hoạt động"); 
         foreach (var author in statistics.AuthorStats)
         {
             sb.AppendLine($"{author.AccountId},\"{author.AccountName}\",{author.ArticleCount},{author.ActiveCount},{author.InactiveCount}");
