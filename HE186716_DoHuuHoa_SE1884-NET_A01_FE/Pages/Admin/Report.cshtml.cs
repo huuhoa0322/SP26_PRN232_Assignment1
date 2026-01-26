@@ -17,6 +17,9 @@ public class ReportModel : PageModel
     [BindProperty(SupportsGet = true)]
     public DateTime? EndDate { get; set; }
 
+    [TempData]
+    public string? ErrorMessage { get; set; }
+
     public ReportModel(ApiService apiService)
     {
         _apiService = apiService;
@@ -27,7 +30,34 @@ public class ReportModel : PageModel
         if (HttpContext.Session.GetString("IsAdmin") != "True")
             return RedirectToPage("/Auth/Login");
 
+        // Validate date range
+        if (StartDate.HasValue && EndDate.HasValue && StartDate.Value > EndDate.Value)
+        {
+            ErrorMessage = "Ngày b?t ??u không ???c sau ngày k?t thúc";
+            return Page();
+        }
+
         Statistics = await _apiService.GetReportStatisticsAsync(StartDate, EndDate);
         return Page();
     }
-}
+
+    public async Task<IActionResult> OnGetExportAsync()
+    {
+        if (HttpContext.Session.GetString("IsAdmin") != "True")
+            return RedirectToPage("/Auth/Login");
+
+        // Validate date range
+        if (StartDate.HasValue && EndDate.HasValue && StartDate.Value > EndDate.Value)
+        {
+            ErrorMessage = "Ngày b?t ??u không ???c sau ngày k?t thúc";
+            return RedirectToPage("./Report", new { StartDate, EndDate });
+        }
+
+        var fileBytes = await _apiService.DownloadReportExcelAsync(StartDate, EndDate);
+        if (fileBytes == null)
+            return NotFound();
+
+        var fileName = $"BaoCaoThongKe_{DateTime.Now:yyyyMMdd_HHmmss}.csv";
+        return File(fileBytes, "text/csv", fileName);
+    }
+} 

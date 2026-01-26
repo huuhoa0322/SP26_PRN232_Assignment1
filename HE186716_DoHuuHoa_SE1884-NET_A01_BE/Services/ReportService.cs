@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Repositories;
 
@@ -22,9 +22,9 @@ public class ReportService : IReportService
 
     public async Task<ReportStatisticsDto> GetStatisticsAsync(ReportFilterDto filter)
     {
-        // Get articles filtered by date range
+        // Get articles filtered by date range, sorted by CreatedDate descending
         var articles = await _newsArticleRepository.FilterByDateRangeAsync(filter.StartDate, filter.EndDate);
-        var articlesList = articles.ToList();
+        var articlesList = articles.OrderByDescending(a => a.CreatedDate).ToList();
 
         // Category statistics
         var categories = await _categoryRepository.GetAllAsync();
@@ -52,6 +52,27 @@ public class ReportService : IReportService
           .OrderByDescending(s => s.ArticleCount)
           .ToList();
 
+        // Status statistics (Active/Inactive)
+        var statusStats = new List<StatusStatDto>
+        {
+            new StatusStatDto
+            {
+                Status = true,
+                StatusName = "Active",
+                ArticleCount = articlesList.Count(a => a.NewsStatus == true),
+                LatestCreatedDate = articlesList.Where(a => a.NewsStatus == true).Max(a => a.CreatedDate)
+            },
+            new StatusStatDto
+            {
+                Status = false,
+                StatusName = "Inactive",
+                ArticleCount = articlesList.Count(a => a.NewsStatus == false),
+                LatestCreatedDate = articlesList.Where(a => a.NewsStatus == false).Any() 
+                    ? articlesList.Where(a => a.NewsStatus == false).Max(a => a.CreatedDate) 
+                    : null
+            }
+        };
+
         return new ReportStatisticsDto
         {
             StartDate = filter.StartDate,
@@ -60,7 +81,8 @@ public class ReportService : IReportService
             ActiveArticles = articlesList.Count(a => a.NewsStatus == true),
             InactiveArticles = articlesList.Count(a => a.NewsStatus == false),
             CategoryStats = categoryStats,
-            AuthorStats = authorStats
+            AuthorStats = authorStats,
+            StatusStats = statusStats
         };
     }
 
@@ -71,17 +93,26 @@ public class ReportService : IReportService
 
         // Add BOM for Excel to recognize UTF-8
         // Header - Summary
-        sb.AppendLine("=== NEWS ARTICLE STATISTICS REPORT ===");
+        sb.AppendLine("=== BÁO CÁO THỐNG KÊ BÀI VIẾT ===");
         sb.AppendLine();
-        sb.AppendLine($"Report Period,{(statistics.StartDate?.ToString("yyyy-MM-dd") ?? "All")},{(statistics.EndDate?.ToString("yyyy-MM-dd") ?? "All")}");
-        sb.AppendLine($"Total Articles,{statistics.TotalArticles}");
-        sb.AppendLine($"Active Articles,{statistics.ActiveArticles}");
-        sb.AppendLine($"Inactive Articles,{statistics.InactiveArticles}");
+        sb.AppendLine($"Thời gian báo cáo,{(statistics.StartDate?.ToString("yyyy-MM-dd") ?? "Tất cả")},{(statistics.EndDate?.ToString("yyyy-MM-dd") ?? "Tất cả")}");
+        sb.AppendLine($"Tổng bài viết,{statistics.TotalArticles}");
+        sb.AppendLine($"Bài viết Active,{statistics.ActiveArticles}");
+        sb.AppendLine($"Bài viết Inactive,{statistics.InactiveArticles}");
+        sb.AppendLine();
+
+        // Status Statistics
+        sb.AppendLine("=== THỐNG KÊ THEO TRẠNG THÁI ===");
+        sb.AppendLine("Trạng thái,Số lượng,Ngày tạo gần nhất");
+        foreach (var status in statistics.StatusStats)
+        {
+            sb.AppendLine($"{status.StatusName},{status.ArticleCount},{status.LatestCreatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "N/A"}");
+        }
         sb.AppendLine();
 
         // Category Statistics
-        sb.AppendLine("=== CATEGORY STATISTICS ===");
-        sb.AppendLine("Category ID,Category Name,Total Articles,Active,Inactive");
+        sb.AppendLine("=== THỐNG KÊ THEO DANH MỤC ==="); 
+        sb.AppendLine("Mã danh mục,Tên danh mục,Tổng bài viết,Active,Inactive");
         foreach (var cat in statistics.CategoryStats)
         {
             sb.AppendLine($"{cat.CategoryId},\"{cat.CategoryName}\",{cat.ArticleCount},{cat.ActiveCount},{cat.InactiveCount}");
@@ -89,8 +120,8 @@ public class ReportService : IReportService
         sb.AppendLine();
 
         // Author Statistics
-        sb.AppendLine("=== AUTHOR STATISTICS ===");
-        sb.AppendLine("Account ID,Author Name,Total Articles,Active,Inactive");
+        sb.AppendLine("=== THỐNG KÊ THEO TÁC GIẢ ===");
+        sb.AppendLine("Mã tác giả,Tên tác giả,Tổng bài viết,Active,Inactive");
         foreach (var author in statistics.AuthorStats)
         {
             sb.AppendLine($"{author.AccountId},\"{author.AccountName}\",{author.ArticleCount},{author.ActiveCount},{author.InactiveCount}");

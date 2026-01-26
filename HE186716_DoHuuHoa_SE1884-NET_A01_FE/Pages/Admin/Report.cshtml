@@ -6,20 +6,39 @@
 
 <h2>Báo cáo thống kê</h2>
 
+<!-- Toast Container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage">
+            </div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 <div class="card mb-4">
     <div class="card-body">
         <form method="get" class="row g-3">
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Từ ngày</label>
                 <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <label class="form-label">Đến ngày</label>
                 <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
             </div>
-            <div class="col-md-4 d-flex align-items-end">
+            <div class="col-md-3 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary">Xem báo cáo</button>
             </div>
+            @if (Model.Statistics != null)
+            {
+                <div class="col-md-3 d-flex align-items-end">
+                    <a asp-page-handler="Export" asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")" asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")" class="btn btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+                    </a>
+                </div>
+            }
         </form>
     </div>
 </div>
@@ -54,9 +73,41 @@
     </div>
 
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-6 mb-3">
             <div class="card">
                 <div class="card-header">
+                    Thống kê theo Trạng thái
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Trạng thái</th>
+                                <th>Số lượng</th>
+                                <th>Ngày tạo gần nhất</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var status in Model.Statistics.StatusStats)
+                            {
+                                <tr>
+                                    <td>
+                                        <span class="badge @(status.Status ? "bg-success" : "bg-secondary")">
+                                            @status.StatusName
+                                        </span>
+                                    </td>
+                                    <td><strong>@status.ArticleCount</strong></td>
+                                    <td>@(status.LatestCreatedDate?.ToString("dd/MM/yyyy HH:mm") ?? "N/A")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header"> 
                     Thống kê theo Category
                 </div>
                 <div class="card-body">
@@ -84,7 +135,10 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
                     Thống kê theo Author
@@ -121,4 +175,84 @@ else
     <div class="alert alert-info">
         Chọn khoảng thời gian để xem báo cáo, hoặc để trống để xem tất cả.
     </div>
+}
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show toast if there's an error message
+        var errorMessage = '@Html.Raw(Model.ErrorMessage ?? "")';
+        if (errorMessage) {
+            showToast(errorMessage, false);
+        }
+
+        const form = document.querySelector('form');
+        const startDateInput = document.querySelector('input[name="startDate"]');
+        const endDateInput = document.querySelector('input[name="endDate"]');
+        
+        form.addEventListener('submit', function(e) {
+            const startDate = startDateInput.value;
+            const endDate = endDateInput.value;
+            
+            // Only validate StartDate <= EndDate
+            if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+                e.preventDefault();
+                showToast('Ngày bắt đầu không được sau ngày kết thúc!', false);
+                startDateInput.focus();
+            }
+        });
+        
+        // Also validate for Export link
+        const exportLink = document.querySelector('a[asp-page-handler="Export"]');
+        if (exportLink) {
+            exportLink.addEventListener('click', function(e) {
+                const startDate = startDateInput.value;
+                const endDate = endDateInput.value;
+                
+                // Only validate StartDate <= EndDate
+                if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+                    e.preventDefault();
+                    showToast('Ngày bắt đầu không được sau ngày kết thúc!', false);
+                    startDateInput.focus();
+                }
+            });
+        }
+    });
+
+    function showToast(message, isSuccess) {
+        var toastEl = document.getElementById('notificationToast');
+        var toastBody = document.getElementById('toastMessage');
+        var closeBtn = toastEl.querySelector('.btn-close');
+        
+        // Set message
+        toastBody.textContent = message;
+        
+        // Remove previous classes and styles
+        toastEl.classList.remove('text-bg-success', 'text-bg-danger', 'bg-success', 'bg-danger', 'text-white');
+        toastEl.style.backgroundColor = '';
+        toastEl.style.color = '';
+        
+        // Set color based on success/error
+        if (isSuccess) {
+            toastEl.classList.add('bg-success', 'text-white');
+            toastEl.style.backgroundColor = '#198754'; // Bootstrap green
+        } else {
+            toastEl.classList.add('bg-danger', 'text-white');
+            toastEl.style.backgroundColor = '#dc3545'; // Bootstrap red
+        }
+        
+        // White text for better contrast
+        toastEl.style.color = '#ffffff';
+        
+        // Ensure close button is visible on both backgrounds
+        closeBtn.classList.add('btn-close-white');
+        
+        // Show toast
+        var toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 4000
+        });
+        toast.show();
+    }
+</script>
 }

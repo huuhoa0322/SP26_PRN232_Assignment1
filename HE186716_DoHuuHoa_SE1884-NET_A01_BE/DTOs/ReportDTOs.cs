@@ -18,6 +18,7 @@ public class ReportStatisticsDto
     public int InactiveArticles { get; set; }
     public List<CategoryStatDto> CategoryStats { get; set; } = new();
     public List<AuthorStatDto> AuthorStats { get; set; } = new();
+    public List<StatusStatDto> StatusStats { get; set; } = new();
 }
 
 public class CategoryStatDto
@@ -36,4 +37,12 @@ public class AuthorStatDto
     public int ArticleCount { get; set; }
     public int ActiveCount { get; set; }
     public int InactiveCount { get; set; }
+}
+
+public class StatusStatDto
+{
+    public bool Status { get; set; }
+    public string StatusName { get; set; } = null!;
+    public int ArticleCount { get; set; }
+    public DateTime? LatestCreatedDate { get; set; }
 }

@@ -249,6 +249,22 @@ public class ApiService
         return null;
     }
 
+    public async Task<byte[]?> DownloadReportExcelAsync(DateTime? startDate, DateTime? endDate)
+    {
+        var url = "api/report/export?";
+        if (startDate.HasValue)
+            url += $"startDate={startDate.Value:yyyy-MM-dd}&";
+        if (endDate.HasValue)
+            url += $"endDate={endDate.Value:yyyy-MM-dd}&";
+        
+        var response = await _httpClient.GetAsync(url.TrimEnd('&', '?'));
+        if (response.IsSuccessStatusCode)
+        {
+            return await response.Content.ReadAsByteArrayAsync();
+        } 
+        return null;
+    }
+
     // ===== CATEGORIES (Staff) =====
     public async Task<List<CategoryDto>> GetAllCategoriesAsync()
     {
