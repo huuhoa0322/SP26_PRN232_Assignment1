@@ -1,4 +1,4 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using System.Text.Json;
 using HE186716_DoHuuHoa_SE1884_NET_A01_FE.Models;
 
@@ -18,6 +18,48 @@ public class ApiService
         {
             PropertyNameCaseInsensitive = true
         };
+    }
+
+    // Helper method to parse error response
+    private async Task<string> ParseErrorResponseAsync(HttpResponseMessage response)
+    {
+        try
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            
+            // Try to parse as JSON error response
+            var errorJson = JsonSerializer.Deserialize<JsonElement>(errorContent, _jsonOptions);
+            
+            // Check for validation errors
+            if (errorJson.TryGetProperty("errors", out var errors))
+            {
+                var errorMessages = new List<string>();
+                foreach (var error in errors.EnumerateObject())
+                {
+                    if (error.Value.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var message in error.Value.EnumerateArray())
+                        {
+                            errorMessages.Add(message.GetString() ?? "");
+                        }
+                    }
+                }
+                if (errorMessages.Any())
+                    return string.Join("; ", errorMessages);
+            }
+            
+            // Check for simple message property
+            if (errorJson.TryGetProperty("message", out var messageElement))
+            {
+                return messageElement.GetString() ?? errorContent;
+            }
+            
+            return errorContent;
+        }
+        catch
+        {
+            return await response.Content.ReadAsStringAsync();
+        }
     }
 
     // ===== AUTH =====
@@ -164,9 +206,9 @@ public class ApiService
     {
         var response = await _httpClient.PostAsJsonAsync("api/account", dto);
         if (response.IsSuccessStatusCode)
-            return (true, "Account created successfully");
+            return (true, "Tạo tài khoản thành công");
         
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ParseErrorResponseAsync(response);
         return (false, error);
     }
 
@@ -174,9 +216,9 @@ public class ApiService
     {
         var response = await _httpClient.PutAsJsonAsync($"api/account/{id}", dto);
         if (response.IsSuccessStatusCode)
-            return (true, "Account updated successfully");
+            return (true, "Cập nhật tài khoản thành công");
         
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ParseErrorResponseAsync(response);
         return (false, error);
     }
 
@@ -184,9 +226,9 @@ public class ApiService
     {
         var response = await _httpClient.DeleteAsync($"api/account/{id}");
         if (response.IsSuccessStatusCode)
-            return (true, "Account deleted successfully");
+            return (true, "Xóa tài khoản thành công");
         
-        var error = await response.Content.ReadAsStringAsync();
+        var error = await ParseErrorResponseAsync(response);
         return (false, error);
     }
 
@@ -219,22 +261,22 @@ public class ApiService
     public async Task<(bool Success, string Message)> CreateCategoryAsync(CreateCategoryDto dto)
     {
         var response = await _httpClient.PostAsJsonAsync("api/category", dto);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Tạo danh mục thành công");
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     public async Task<(bool Success, string Message)> UpdateCategoryAsync(short id, UpdateCategoryDto dto)
     {
         var response = await _httpClient.PutAsJsonAsync($"api/category/{id}", dto);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Cập nhật danh mục thành công");
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     public async Task<(bool Success, string Message)> DeleteCategoryAsync(short id)
     {
         var response = await _httpClient.DeleteAsync($"api/category/{id}");
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Xóa danh mục thành công"); 
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     // ===== NEWS ARTICLES (Staff) =====
@@ -257,29 +299,29 @@ public class ApiService
     public async Task<(bool Success, string Message)> CreateNewsAsync(CreateNewsArticleDto dto, short createdById)
     {
         var response = await _httpClient.PostAsJsonAsync($"api/news?createdById={createdById}", dto);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Tạo bài viết thành công");
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     public async Task<(bool Success, string Message)> UpdateNewsAsync(string id, UpdateNewsArticleDto dto, short updatedById)
     {
         var response = await _httpClient.PutAsJsonAsync($"api/news/{id}?updatedById={updatedById}", dto);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Cập nhật bài viết thành công");
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     public async Task<(bool Success, string Message)> DeleteNewsAsync(string id)
     {
         var response = await _httpClient.DeleteAsync($"api/news/{id}");
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Xóa bài viết thành công");
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     public async Task<(bool Success, string Message)> DuplicateNewsAsync(string id, short createdById)
     {
         var response = await _httpClient.PostAsync($"api/news/{id}/duplicate?createdById={createdById}", null);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        if (response.IsSuccessStatusCode) return (true, "Sao chép bài viết thành công");
+        return (false, await ParseErrorResponseAsync(response));
     }
 
     // ===== TAGS (Staff) =====
@@ -298,7 +340,7 @@ public class ApiService
         return (false, await response.Content.ReadAsStringAsync());
     }
 
-    public async Task<(bool Success, string Message)> UpdateTagAsync(int id, UpdateTagDto dto)
+    public async Task<(bool Success, string Message)> UpdateTagAsync(int id, UpdateTagDto dto) 
     {
         var response = await _httpClient.PutAsJsonAsync($"api/tag/{id}", dto);
         if (response.IsSuccessStatusCode) return (true, "Success");

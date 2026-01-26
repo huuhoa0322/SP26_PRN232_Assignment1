@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Services;
 
@@ -122,7 +122,7 @@ public class NewsController : ControllerBase
 
         var article = await _newsArticleService.UpdateAsync(id, dto, updatedById);
         if (article == null)
-            return NotFound(new { message = "Article not found" });
+            return NotFound(new { message = "Không tìm thấy bài viết" }); 
 
         return Ok(article);
     }
@@ -148,7 +148,7 @@ public class NewsController : ControllerBase
     {
         var article = await _newsArticleService.DuplicateAsync(id, createdById);
         if (article == null)
-            return NotFound(new { message = "Original article not found" });
+            return NotFound(new { message = "Không tìm thấy bài viết gốc" });
 
         return CreatedAtAction(nameof(GetById), new { id = article.NewsArticleId }, article);
     }

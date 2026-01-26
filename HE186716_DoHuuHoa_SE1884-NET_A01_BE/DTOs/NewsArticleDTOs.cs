@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 
@@ -24,20 +24,20 @@ public class NewsArticleDto
 
 public class CreateNewsArticleDto
 {
-    [StringLength(400, ErrorMessage = "Title cannot exceed 400 characters")]
+    [StringLength(400, ErrorMessage = "Tiêu đề không được vượt quá 400 ký tự")]
     public string? NewsTitle { get; set; }
 
-    [Required(ErrorMessage = "Headline is required")]
-    [StringLength(150, ErrorMessage = "Headline cannot exceed 150 characters")]
+    [Required(ErrorMessage = "Tiêu đề ngắn là bắt buộc")]
+    [StringLength(150, ErrorMessage = "Tiêu đề ngắn không được vượt quá 150 ký tự")]
     public string Headline { get; set; } = null!;
 
-    [StringLength(20000, ErrorMessage = "Content cannot exceed 20000 characters")]
+    [StringLength(20000, ErrorMessage = "Nội dung không được vượt quá 20000 ký tự")]
     public string? NewsContent { get; set; }
 
-    [StringLength(400, ErrorMessage = "Source cannot exceed 400 characters")]
+    [StringLength(400, ErrorMessage = "Nguồn không được vượt quá 400 ký tự")]
     public string? NewsSource { get; set; }
 
-    [Required(ErrorMessage = "Category is required")]
+    [Required(ErrorMessage = "Danh mục là bắt buộc")]  
     public short CategoryId { get; set; }
 
     public bool NewsStatus { get; set; } = true;
@@ -47,20 +47,20 @@ public class CreateNewsArticleDto
 
 public class UpdateNewsArticleDto
 {
-    [StringLength(400, ErrorMessage = "Title cannot exceed 400 characters")]
+    [StringLength(400, ErrorMessage = "Tiêu đề không được vượt quá 400 ký tự")]
     public string? NewsTitle { get; set; }
 
-    [Required(ErrorMessage = "Headline is required")]
-    [StringLength(150, ErrorMessage = "Headline cannot exceed 150 characters")]
+    [Required(ErrorMessage = "Tiêu đề ngắn là bắt buộc")]
+    [StringLength(150, ErrorMessage = "Tiêu đề ngắn không được vượt quá 150 ký tự")]
     public string Headline { get; set; } = null!;
 
-    [StringLength(4000, ErrorMessage = "Content cannot exceed 4000 characters")]
+    [StringLength(4000, ErrorMessage = "Nội dung không được vượt quá 4000 ký tự")]
     public string? NewsContent { get; set; }
 
-    [StringLength(400, ErrorMessage = "Source cannot exceed 400 characters")]
+    [StringLength(400, ErrorMessage = "Nguồn không được vượt quá 400 ký tự")]
     public string? NewsSource { get; set; }
 
-    [Required(ErrorMessage = "Category is required")]
+    [Required(ErrorMessage = "Danh mục là bắt buộc")]
     public short CategoryId { get; set; }
 
     public bool? NewsStatus { get; set; }

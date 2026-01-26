@@ -1,4 +1,4 @@
-using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
+﻿using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Models;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -152,14 +152,14 @@ public class NewsArticleService : INewsArticleService
     {
         var article = await _newsArticleRepository.GetByIdWithDetailsAsync(id);
         if (article == null)
-            return (false, "Article not found");
+            return (false, "Không tìm thấy bài viết");
 
         // Clear tags first (handled by many-to-many relationship)
         article.Tags.Clear();
         await _newsArticleRepository.UpdateAsync(article);
 
         await _newsArticleRepository.DeleteAsync(article);
-        return (true, "Article deleted successfully");
+        return (true, "Xóa bài viết thành công"); 
     }
 
     public async Task<NewsArticleDto?> DuplicateAsync(string id, short createdById)

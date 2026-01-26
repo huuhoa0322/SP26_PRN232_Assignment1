@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Services;
 
@@ -43,7 +43,7 @@ public class CategoryController : ControllerBase
     {
         var category = await _categoryService.GetByIdAsync(id);
         if (category == null)
-            return NotFound(new { message = "Category not found" });
+            return NotFound(new { message = "Không tìm thấy danh mục" }); 
 
         return Ok(category);
     }
@@ -82,7 +82,7 @@ public class CategoryController : ControllerBase
 
         var category = await _categoryService.UpdateAsync(id, dto);
         if (category == null)
-            return NotFound(new { message = "Category not found" });
+            return NotFound(new { message = "Không tìm thấy danh mục" });
 
         return Ok(category);
     }

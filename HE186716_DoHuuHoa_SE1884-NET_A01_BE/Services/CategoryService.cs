@@ -1,4 +1,4 @@
-using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
+﻿using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Models;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Repositories;
 
@@ -61,7 +61,7 @@ public class CategoryService : ICategoryService
         if (dto.ParentCategoryId != category.ParentCategoryId)
         {
             if (await _categoryRepository.HasArticlesAsync(id))
-                throw new InvalidOperationException("Cannot change ParentCategoryID for a category that already has articles");
+                throw new InvalidOperationException("Không thể thay đổi danh mục cha của danh mục đã có bài viết");  
         }
 
         category.CategoryName = dto.CategoryName;
@@ -78,14 +78,14 @@ public class CategoryService : ICategoryService
     {
         var category = await _categoryRepository.GetByIdAsync(id);
         if (category == null)
-            return (false, "Category not found");
+            return (false, "Không tìm thấy danh mục");
 
         // Check if category has any articles
         if (await _categoryRepository.HasArticlesAsync(id))
-            return (false, "Cannot delete category that contains news articles");
+            return (false, "Không thể xóa danh mục có chứa bài viết");
 
         await _categoryRepository.DeleteAsync(category);
-        return (true, "Category deleted successfully");
+        return (true, "Xóa danh mục thành công");
     }
 
     private CategoryDto MapToDto(Category category)

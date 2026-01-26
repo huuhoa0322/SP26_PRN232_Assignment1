@@ -38,6 +38,13 @@ public class AccountsModel : PageModel
         if (HttpContext.Session.GetString("IsAdmin") != "True")
             return RedirectToPage("/Auth/Login");
 
+        // Get message from TempData if exists
+        if (TempData["Message"] != null)
+        {
+            Message = TempData["Message"]?.ToString();
+            IsSuccess = TempData["IsSuccess"] != null && (bool)TempData["IsSuccess"];
+        }
+
         var pagedResult = await _apiService.SearchAccountsPagedAsync(Keyword, Role, PageIndex, PageSize);
         if (pagedResult != null)
         {
@@ -67,8 +74,8 @@ public class AccountsModel : PageModel
                 AccountRole = AccountRole
             };
             var result = await _apiService.CreateAccountAsync(dto);
-            Message = result.Message;
-            IsSuccess = result.Success;
+            TempData["Message"] = result.Message;
+            TempData["IsSuccess"] = result.Success;
         }
         else if (handler == "Update" && AccountId.HasValue)
         {
@@ -76,16 +83,17 @@ public class AccountsModel : PageModel
             {
                 AccountName = AccountName,
                 AccountEmail = AccountEmail,
-                AccountPassword = AccountPassword,
+                // Only send password if it's not empty
+                AccountPassword = string.IsNullOrWhiteSpace(AccountPassword) ? null : AccountPassword,
                 AccountRole = AccountRole
             };
             var result = await _apiService.UpdateAccountAsync(AccountId.Value, dto);
-            Message = result.Message;
-            IsSuccess = result.Success;
+            TempData["Message"] = result.Message;
+            TempData["IsSuccess"] = result.Success; 
         }
 
-        Accounts = await _apiService.GetAllAccountsAsync();
-        return Page();
+        // Redirect to GET to avoid form resubmission
+        return RedirectToPage("./Accounts", new { Keyword, Role, PageIndex });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(short deleteId)
@@ -94,10 +102,10 @@ public class AccountsModel : PageModel
             return RedirectToPage("/Auth/Login");
 
         var result = await _apiService.DeleteAccountAsync(deleteId);
-        Message = result.Message;
-        IsSuccess = result.Success;
+        TempData["Message"] = result.Message;
+        TempData["IsSuccess"] = result.Success;
 
-        Accounts = await _apiService.GetAllAccountsAsync();
-        return Page();
+        // Redirect to GET to avoid form resubmission
+        return RedirectToPage("./Accounts", new { Keyword, Role, PageIndex });
     }
 }

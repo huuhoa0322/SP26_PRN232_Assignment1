@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 
@@ -16,12 +16,12 @@ public class CategoryDto
 
 public class CreateCategoryDto
 {
-    [Required(ErrorMessage = "Category name is required")]
-    [StringLength(100, ErrorMessage = "Category name cannot exceed 100 characters")]
+    [Required(ErrorMessage = "Tên danh mục là bắt buộc")]
+    [StringLength(100, ErrorMessage = "Tên danh mục không được vượt quá 100 ký tự")]
     public string CategoryName { get; set; } = null!;
 
-    [Required(ErrorMessage = "Category description is required")]
-    [StringLength(250, ErrorMessage = "Description cannot exceed 250 characters")]
+    [Required(ErrorMessage = "Mô tả danh mục là bắt buộc")]
+    [StringLength(250, ErrorMessage = "Mô tả không được vượt quá 250 ký tự")] 
     public string CategoryDesciption { get; set; } = null!;
 
     public short? ParentCategoryId { get; set; }
@@ -31,12 +31,12 @@ public class CreateCategoryDto
 
 public class UpdateCategoryDto
 {
-    [Required(ErrorMessage = "Category name is required")]
-    [StringLength(100, ErrorMessage = "Category name cannot exceed 100 characters")]
+    [Required(ErrorMessage = "Tên danh mục là bắt buộc")]
+    [StringLength(100, ErrorMessage = "Tên danh mục không được vượt quá 100 ký tự")]
     public string CategoryName { get; set; } = null!;
 
-    [Required(ErrorMessage = "Category description is required")]
-    [StringLength(250, ErrorMessage = "Description cannot exceed 250 characters")]
+    [Required(ErrorMessage = "Mô tả danh mục là bắt buộc")]
+    [StringLength(250, ErrorMessage = "Mô tả không được vượt quá 250 ký tự")]
     public string CategoryDesciption { get; set; } = null!;
 
     public short? ParentCategoryId { get; set; }

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 
@@ -15,55 +15,55 @@ public class AccountDto
 
 public class CreateAccountDto
 {
-    [Required(ErrorMessage = "Account name is required")]
-    [StringLength(100, ErrorMessage = "Account name cannot exceed 100 characters")]
+    [Required(ErrorMessage = "Tên tài khoản là bắt buộc")]
+    [StringLength(100, ErrorMessage = "Tên tài khoản không được vượt quá 100 ký tự")]
     public string AccountName { get; set; } = null!;
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress(ErrorMessage = "Invalid email format")]
-    [StringLength(70, ErrorMessage = "Email cannot exceed 70 characters")]
+    [Required(ErrorMessage = "Email là bắt buộc")]
+    [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ")]
+    [StringLength(70, ErrorMessage = "Email không được vượt quá 70 ký tự")] 
     public string AccountEmail { get; set; } = null!;
 
-    [Required(ErrorMessage = "Password is required")]
-    [StringLength(70, MinimumLength = 3, ErrorMessage = "Password must be between 3 and 70 characters")]
+    [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
+    [StringLength(70, MinimumLength = 3, ErrorMessage = "Mật khẩu phải có từ 3 đến 70 ký tự")]
     public string AccountPassword { get; set; } = null!;
 
-    [Required(ErrorMessage = "Role is required")]
-    [Range(1, 2, ErrorMessage = "Role must be 1 (Staff) or 2 (Lecturer)")]
+    [Required(ErrorMessage = "Vai trò là bắt buộc")]
+    [Range(1, 2, ErrorMessage = "Vai trò phải là 1 (Staff) hoặc 2 (Lecturer)")]
     public int AccountRole { get; set; }
 }
 
 public class UpdateAccountDto
 {
-    [Required(ErrorMessage = "Account name is required")]
-    [StringLength(100, ErrorMessage = "Account name cannot exceed 100 characters")]
+    [Required(ErrorMessage = "Tên tài khoản là bắt buộc")]
+    [StringLength(100, ErrorMessage = "Tên tài khoản không được vượt quá 100 ký tự")]
     public string AccountName { get; set; } = null!;
 
-    [Required(ErrorMessage = "Email is required")]
-    [EmailAddress(ErrorMessage = "Invalid email format")]
-    [StringLength(70, ErrorMessage = "Email cannot exceed 70 characters")]
+    [Required(ErrorMessage = "Email là bắt buộc")]
+    [EmailAddress(ErrorMessage = "Định dạng email không hợp lệ")]
+    [StringLength(70, ErrorMessage = "Email không được vượt quá 70 ký tự")]
     public string AccountEmail { get; set; } = null!;
 
-    [StringLength(70, MinimumLength = 3, ErrorMessage = "Password must be between 3 and 70 characters")]
+    // Only validate if password is provided (not null or empty)
     public string? AccountPassword { get; set; }
 
-    [Required(ErrorMessage = "Role is required")]
-    [Range(1, 2, ErrorMessage = "Role must be 1 (Staff) or 2 (Lecturer)")]
+    [Required(ErrorMessage = "Vai trò là bắt buộc")]
+    [Range(1, 2, ErrorMessage = "Vai trò phải là 1 (Staff) hoặc 2 (Lecturer)")]
     public int AccountRole { get; set; }
 }
 
 // DTO for changing password with verification
 public class ChangePasswordDto
 {
-    [Required(ErrorMessage = "Current password is required")]
+    [Required(ErrorMessage = "Mật khẩu hiện tại là bắt buộc")]
     public string CurrentPassword { get; set; } = null!;
 
-    [Required(ErrorMessage = "New password is required")]
-    [StringLength(70, MinimumLength = 3, ErrorMessage = "Password must be between 3 and 70 characters")]
+    [Required(ErrorMessage = "Mật khẩu mới là bắt buộc")]
+    [StringLength(70, MinimumLength = 3, ErrorMessage = "Mật khẩu phải có từ 3 đến 70 ký tự")]
     public string NewPassword { get; set; } = null!;
 
-    [Required(ErrorMessage = "Confirm password is required")]
-    [Compare("NewPassword", ErrorMessage = "Passwords do not match")]
+    [Required(ErrorMessage = "Xác nhận mật khẩu là bắt buộc")]
+    [Compare("NewPassword", ErrorMessage = "Mật khẩu không khớp")]
     public string ConfirmPassword { get; set; } = null!;
 }
 

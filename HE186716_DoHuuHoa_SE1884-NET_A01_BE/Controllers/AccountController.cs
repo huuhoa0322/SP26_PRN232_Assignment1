@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Services;
 
@@ -33,7 +33,7 @@ public class AccountController : ControllerBase
     {
         var account = await _accountService.GetByIdAsync(id);
         if (account == null)
-            return NotFound(new { message = "Account not found" });
+            return NotFound(new { message = "Không tìm thấy tài khoản" });
 
         return Ok(account);
     }
@@ -63,7 +63,7 @@ public class AccountController : ControllerBase
 
         // Check if email already exists
         if (await _accountService.EmailExistsAsync(dto.AccountEmail))
-            return BadRequest(new { message = "Email already exists" });
+            return BadRequest(new { message = "Email đã tồn tại" }); 
 
         var account = await _accountService.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = account.AccountId }, account);
@@ -78,13 +78,18 @@ public class AccountController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
+        // Validate password length if provided
+        if (!string.IsNullOrEmpty(dto.AccountPassword) && 
+            (dto.AccountPassword.Length < 3 || dto.AccountPassword.Length > 70))
+            return BadRequest(new { message = "Mật khẩu phải có từ 3 đến 70 ký tự" });  
+
         // Check if email already exists for another account
         if (await _accountService.EmailExistsAsync(dto.AccountEmail, id))
-            return BadRequest(new { message = "Email already exists" });
+            return BadRequest(new { message = "Email đã tồn tại" });
 
         var account = await _accountService.UpdateAsync(id, dto);
         if (account == null)
-            return NotFound(new { message = "Account not found" });
+            return NotFound(new { message = "Không tìm thấy tài khoản" });
 
         return Ok(account);
     }

@@ -1,4 +1,4 @@
-using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
+﻿using HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Models;
 using HE186716_DoHuuHoa_SE1884_NET_A01_BE.Repositories;
 using Microsoft.EntityFrameworkCore;
@@ -73,14 +73,14 @@ public class AccountService : IAccountService
     {
         var account = await _accountRepository.GetByIdAsync(id);
         if (account == null)
-            return (false, "Account not found");
+            return (false, "Không tìm thấy tài khoản");
 
         // Check if account has created any articles
         if (await _accountRepository.HasCreatedArticlesAsync(id))
-            return (false, "Cannot delete account that has created news articles");
+            return (false, "Không thể xóa tài khoản đã tạo bài viết");
 
         await _accountRepository.DeleteAsync(account);
-        return (true, "Account deleted successfully");
+        return (true, "Xóa tài khoản thành công");
     }
 
     public async Task<bool> EmailExistsAsync(string email, short? excludeId = null)
@@ -97,17 +97,17 @@ public class AccountService : IAccountService
     {
         var account = await _accountRepository.GetByIdAsync(id);
         if (account == null)
-            return (false, "Account not found");
+            return (false, "Không tìm thấy tài khoản");
 
         // Verify current password
         if (account.AccountPassword != dto.CurrentPassword)
-            return (false, "Current password is incorrect");
+            return (false, "Mật khẩu hiện tại không đúng");
 
         // Update password
         account.AccountPassword = dto.NewPassword;
         await _accountRepository.UpdateAsync(account);
 
-        return (true, "Password changed successfully");
+        return (true, "Đổi mật khẩu thành công"); 
     }
 
     public async Task<PagedResultDto<AccountDto>> SearchPagedAsync(string? keyword, int? role, int pageIndex, int pageSize)
