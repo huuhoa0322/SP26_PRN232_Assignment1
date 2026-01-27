@@ -4,18 +4,44 @@
     ViewData["Title"] = "Quản lý Tags";
 }
 
+<!-- Toast Container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    </div>
+</div>
+
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Quản lý Tags</h2>
     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tagModal" onclick="openCreateModal()">
-        + Thêm Tag
+        <i class="bi bi-plus-circle"></i> Thêm Tag
     </button>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.Message))
+<!-- Search Form -->
+<div class="card mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-10">
+                <label class="form-label">Tìm kiếm tag</label>
+                <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="Nhập tên tag..." />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (Model.Tags.Any())
 {
-    <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") alert-dismissible fade show">
-        @Model.Message
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="mb-3">
+        <small class="text-muted">Tìm thấy @Model.Tags.Count tag(s)</small>
     </div>
 }
 
@@ -25,26 +51,50 @@
             <th>ID</th>
             <th>Tên Tag</th>
             <th>Ghi chú</th>
+            <th>Số bài viết</th>
             <th>Thao tác</th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var tag in Model.Tags)
+        @if (Model.Tags.Any())
+        {
+            @foreach (var tag in Model.Tags)
+            {
+                <tr>
+                    <td>@tag.TagId</td>
+                    <td><span class="badge bg-info">#@tag.TagName</span></td>
+                    <td>@tag.Note</td>
+                    <td>
+                        @if (tag.ArticleCount > 0)
+                        {
+                            <a href="/Staff/TagArticles?tagId=@tag.TagId" class="badge bg-primary">
+                                @tag.ArticleCount bài viết
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">0 bài viết</span>
+                        }
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-warning" 
+                                data-bs-toggle="modal" data-bs-target="#tagModal"
+                                onclick='openEditModal(@tag.TagId, @Html.Raw(Json.Serialize(tag.TagName)), @Html.Raw(Json.Serialize(tag.Note ?? "")))'>
+                            Sửa
+                        </button>
+                        <button type="button" class="btn btn-sm btn-danger" 
+                                data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                onclick='openDeleteModal(@tag.TagId, @Html.Raw(Json.Serialize(tag.TagName)))'>
+                            Xóa
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
         {
             <tr>
-                <td>@tag.TagId</td>
-                <td><span class="badge bg-info">#@tag.TagName</span></td>
-                <td>@tag.Note</td>
-                <td>
-                    <button type="button" class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#tagModal"
-                            onclick="openEditModal(@tag.TagId, '@tag.TagName', '@tag.Note')">
-                        Sửa
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal"
-                            onclick="openDeleteModal(@tag.TagId, '@tag.TagName')">
-                        Xóa
-                    </button>
-                </td>
+                <td colspan="5" class="text-center text-muted">Không tìm thấy tag nào</td>
             </tr>
         }
     </tbody>
@@ -62,14 +112,15 @@
                 <div class="modal-body">
                     <input type="hidden" name="TagId" id="tagId" />
                     <input type="hidden" name="handler" id="formHandler" value="Create" />
-                    
+
                     <div class="mb-3">
-                        <label class="form-label">Tên Tag</label>
-                        <input type="text" name="TagName" id="tagName" class="form-control" required />
+                        <label class="form-label">Tên Tag <span class="text-danger">*</span></label>
+                        <input type="text" name="TagName" id="tagName" class="form-control" required maxlength="50" />
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Ghi chú</label>
-                        <textarea name="Note" id="tagNote" class="form-control" rows="2"></textarea>
+                        <textarea name="Note" id="tagNote" class="form-control" rows="3" maxlength="500"></textarea>
+                        <small class="text-muted">Mô tả chi tiết về tag này</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -105,6 +156,52 @@
 
 @section Scripts {
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show toast if there's a message
+        var message = '@Html.Raw(Model.Message ?? "")';
+        var isSuccess = @(Model.IsSuccess ? "true" : "false");
+        
+        if (message) {
+            showToast(message, isSuccess);
+        }
+    });
+
+    function showToast(message, isSuccess) {
+        var toastEl = document.getElementById('notificationToast');
+        var toastBody = document.getElementById('toastMessage');
+        var closeBtn = toastEl.querySelector('.btn-close');
+        
+        // Set message
+        toastBody.textContent = message;
+        
+        // Remove previous classes and styles
+        toastEl.classList.remove('text-bg-success', 'text-bg-danger', 'bg-success', 'bg-danger', 'text-white');
+        toastEl.style.backgroundColor = '';
+        toastEl.style.color = '';
+        
+        // Set color based on success/error
+        if (isSuccess) {
+            toastEl.classList.add('bg-success', 'text-white');
+            toastEl.style.backgroundColor = '#198754'; // Bootstrap green
+        } else {
+            toastEl.classList.add('bg-danger', 'text-white');
+            toastEl.style.backgroundColor = '#dc3545'; // Bootstrap red
+        }
+        
+        // White text for better contrast 
+        toastEl.style.color = '#ffffff';
+        
+        // Ensure close button is visible on both backgrounds
+        closeBtn.classList.add('btn-close-white');
+        
+        // Show toast
+        var toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 4000
+        });
+        toast.show();
+    }
+
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Thêm Tag';
         document.getElementById('formHandler').value = 'Create';

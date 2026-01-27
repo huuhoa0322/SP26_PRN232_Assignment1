@@ -57,8 +57,15 @@ public class TagController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var tag = await _tagService.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = tag.TagId }, tag);
+        try
+        {
+            var tag = await _tagService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = tag.TagId }, tag);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message }); 
+        }
     }
 
     /// <summary>
@@ -70,11 +77,18 @@ public class TagController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var tag = await _tagService.UpdateAsync(id, dto);
-        if (tag == null)
-            return NotFound(new { message = "Tag not found" });
+        try
+        {
+            var tag = await _tagService.UpdateAsync(id, dto);
+            if (tag == null)
+                return NotFound(new { message = "Tag not found" });
 
-        return Ok(tag);
+            return Ok(tag);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     /// <summary>

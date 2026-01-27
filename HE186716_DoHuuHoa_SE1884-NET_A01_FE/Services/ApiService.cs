@@ -394,25 +394,79 @@ public class ApiService
         return new();
     }
 
+    public async Task<TagDto?> GetTagByIdAsync(int id)
+    {
+        var response = await _httpClient.GetAsync($"api/tag/{id}");
+        if (response.IsSuccessStatusCode)
+            return await response.Content.ReadFromJsonAsync<TagDto>(_jsonOptions);
+        return null;
+    }
+
+    public async Task<List<TagDto>> SearchTagsAsync(string keyword)
+    {
+        var response = await _httpClient.GetAsync($"api/tag/search?keyword={Uri.EscapeDataString(keyword)}");
+        if (response.IsSuccessStatusCode)
+            return await response.Content.ReadFromJsonAsync<List<TagDto>>(_jsonOptions) ?? new();
+        return new();
+    }
+
+    public async Task<List<NewsArticleDto>> GetArticlesByTagAsync(int tagId)
+    {
+        var response = await _httpClient.GetAsync($"api/tag/{tagId}/articles");
+        if (response.IsSuccessStatusCode)
+            return await response.Content.ReadFromJsonAsync<List<NewsArticleDto>>(_jsonOptions) ?? new();
+        return new();
+    }
+
     public async Task<(bool Success, string Message)> CreateTagAsync(CreateTagDto dto)
     {
-        var response = await _httpClient.PostAsJsonAsync("api/tag", dto);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        try
+        {
+            var response = await _httpClient.PostAsJsonAsync("api/tag", dto);
+            if (response.IsSuccessStatusCode) 
+                return (true, "Tạo tag thành công"); 
+            
+            var errorMessage = await ParseErrorResponseAsync(response);
+            return (false, errorMessage);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Lỗi: {ex.Message}");
+        }
     }
 
     public async Task<(bool Success, string Message)> UpdateTagAsync(int id, UpdateTagDto dto) 
     {
-        var response = await _httpClient.PutAsJsonAsync($"api/tag/{id}", dto);
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        try
+        {
+            var response = await _httpClient.PutAsJsonAsync($"api/tag/{id}", dto);
+            if (response.IsSuccessStatusCode) 
+                return (true, "Cập nhật tag thành công");
+            
+            var errorMessage = await ParseErrorResponseAsync(response);
+            return (false, errorMessage);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Lỗi: {ex.Message}");
+        }
     }
 
     public async Task<(bool Success, string Message)> DeleteTagAsync(int id)
     {
-        var response = await _httpClient.DeleteAsync($"api/tag/{id}");
-        if (response.IsSuccessStatusCode) return (true, "Success");
-        return (false, await response.Content.ReadAsStringAsync());
+        try
+        {
+            var response = await _httpClient.DeleteAsync($"api/tag/{id}");
+            if (response.IsSuccessStatusCode) 
+                return (true, "Xóa tag thành công");
+            
+            var errorMessage = await ParseErrorResponseAsync(response);
+            return (false, errorMessage);
+        }
+        catch (Exception ex)
+        {
+            return (false, $"Lỗi: {ex.Message}");
+        }
     }
 }
 
