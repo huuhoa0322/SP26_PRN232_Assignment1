@@ -18,6 +18,15 @@ public class TagsModel : PageModel
     
     [BindProperty(SupportsGet = true)]
     public string? Keyword { get; set; }
+    
+    [BindProperty(SupportsGet = true)]
+    public int PageIndex { get; set; } = 1;
+    
+    public int PageSize { get; set; } = 10;
+    public int TotalPages { get; set; }
+    public int TotalCount { get; set; }
+    public bool HasPreviousPage => PageIndex > 1;
+    public bool HasNextPage => PageIndex < TotalPages;
 
     public TagsModel(ApiService apiService) => _apiService = apiService;
 
@@ -25,10 +34,22 @@ public class TagsModel : PageModel
     {
         if (HttpContext.Session.GetString("Role") != "1") 
             return RedirectToPage("/Auth/Login");
-            
-        Tags = string.IsNullOrWhiteSpace(Keyword) 
+        
+        if (PageIndex < 1) PageIndex = 1;
+        
+        var allTags = string.IsNullOrWhiteSpace(Keyword) 
             ? await _apiService.GetAllTagsAsync()
             : await _apiService.SearchTagsAsync(Keyword);
+        
+        TotalCount = allTags.Count;
+        TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
+        
+        if (PageIndex > TotalPages && TotalPages > 0) PageIndex = TotalPages;
+        
+        Tags = allTags
+            .Skip((PageIndex - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
             
         return Page();
     }
@@ -53,7 +74,7 @@ public class TagsModel : PageModel
             IsSuccess = result.Success;
         }
 
-        return RedirectToPage(new { Keyword });
+        return RedirectToPage(new { Keyword, PageIndex });
     }
 
     public async Task<IActionResult> OnPostDeleteAsync(int deleteId)
@@ -65,6 +86,6 @@ public class TagsModel : PageModel
         Message = result.Success ? "Xóa tag thành công" : result.Message;
         IsSuccess = result.Success;
         
-        return RedirectToPage(new { Keyword }); 
+        return RedirectToPage(new { Keyword, PageIndex });
     }
 }

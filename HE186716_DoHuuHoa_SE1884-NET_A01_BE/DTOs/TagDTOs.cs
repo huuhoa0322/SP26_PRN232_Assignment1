@@ -6,7 +6,7 @@ namespace HE186716_DoHuuHoa_SE1884_NET_A01_BE.DTOs;
 public class TagDto
 {
     public int TagId { get; set; }
-    public string? TagName { get; set; }
+    public string? TagName { get; set; } 
     public string? Note { get; set; }
     public int ArticleCount { get; set; }
 }

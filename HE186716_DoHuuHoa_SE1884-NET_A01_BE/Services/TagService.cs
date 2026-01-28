@@ -83,7 +83,7 @@ public class TagService : ITagService
         // Check if tag is used in any articles
         if (await _tagRepository.IsUsedInArticlesAsync(id))
         {
-            return (false, "Khong the xóa tag vì tag đang được sử dụng trong bài viết");
+            return (false, "Không thể xóa tag vì tag đang được sử dụng trong bài viết");
         }
 
         await _tagRepository.DeleteAsync(tag);

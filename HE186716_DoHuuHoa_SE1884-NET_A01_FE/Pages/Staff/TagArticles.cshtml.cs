@@ -14,6 +14,15 @@ public class TagArticlesModel : PageModel
     
     [BindProperty(SupportsGet = true)]
     public int TagId { get; set; }
+    
+    [BindProperty(SupportsGet = true)]
+    public int PageIndex { get; set; } = 1;
+    
+    public int PageSize { get; set; } = 10;
+    public int TotalPages { get; set; }
+    public int TotalCount { get; set; }
+    public bool HasPreviousPage => PageIndex > 1;
+    public bool HasNextPage => PageIndex < TotalPages;
 
     public TagArticlesModel(ApiService apiService) => _apiService = apiService;
 
@@ -27,7 +36,19 @@ public class TagArticlesModel : PageModel
         if (Tag == null)
             return RedirectToPage("/Staff/Tags");
 
-        Articles = await _apiService.GetArticlesByTagAsync(TagId);
+        if (PageIndex < 1) PageIndex = 1;
+
+        var allArticles = await _apiService.GetArticlesByTagAsync(TagId);
+        
+        TotalCount = allArticles.Count;
+        TotalPages = (int)Math.Ceiling(TotalCount / (double)PageSize);
+        
+        if (PageIndex > TotalPages && TotalPages > 0) PageIndex = TotalPages;
+        
+        Articles = allArticles
+            .Skip((PageIndex - 1) * PageSize)
+            .Take(PageSize)
+            .ToList();
         
         return Page();
     }
