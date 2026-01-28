@@ -41,6 +41,9 @@ public class ArticlesModel : PageModel
     public int TotalCount { get; set; }
     public bool HasPreviousPage => PageIndex > 1;
     public bool HasNextPage => PageIndex < TotalPages;
+    
+    // Current logged-in user ID for permission checking
+    public short CurrentUserId { get; set; }
 
     public ArticlesModel(ApiService apiService) => _apiService = apiService;
 
@@ -153,7 +156,28 @@ public class ArticlesModel : PageModel
 
     public async Task<IActionResult> OnPostDeleteAsync(string deleteId)
     {
-        if (HttpContext.Session.GetString("Role") != "1") return RedirectToPage("/Auth/Login");
+        if (HttpContext.Session.GetString("Role") != "1") 
+            return RedirectToPage("/Auth/Login");
+        
+        var currentUserId = GetUserId();
+        
+        // Check ownership before delete
+        var article = await _apiService.GetNewsDetailAsync(deleteId);
+        if (article == null)
+        {
+            Message = "Không tìm thấy bài viết";
+            IsSuccess = false;
+            return RedirectToPage(new { Keyword, SearchCategoryId, SearchStatus, StartDate, EndDate, PageIndex });
+        }
+        
+        // Only allow delete if user is the creator
+        if (article.CreatedById != currentUserId)
+        {
+            Message = "Bạn không có quyền xóa bài viết của người khác";
+            IsSuccess = false;
+            return RedirectToPage(new { Keyword, SearchCategoryId, SearchStatus, StartDate, EndDate, PageIndex });
+        }
+        
         var result = await _apiService.DeleteNewsAsync(deleteId);
         Message = result.Message;
         IsSuccess = result.Success;
@@ -179,6 +203,7 @@ public class ArticlesModel : PageModel
         Tags = await _apiService.GetAllTagsAsync(); 
         
         var userId = GetUserId();
+        CurrentUserId = userId; // Store for UI permission check
         
         if (userId == 0)
         {
@@ -188,6 +213,7 @@ public class ArticlesModel : PageModel
             return;
         }
         
+        // Staff can view ALL articles (not filtered by userId)
         var pagedResult = await _apiService.SearchNewsPagedAsync(
             Keyword, 
             SearchCategoryId, 
@@ -196,7 +222,7 @@ public class ArticlesModel : PageModel
             SearchStatus, 
             StartDate, 
             EndDate,
-            userId);
+            null); // Pass null to see all articles
             
         if (pagedResult != null)
         {

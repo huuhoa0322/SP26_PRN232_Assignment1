@@ -141,11 +141,15 @@
                                 data-id="@article.NewsArticleId">
                             Sao chép
                         </button>
-                        <button type="button" class="btn btn-sm btn-danger btn-delete-article"
-                                data-id="@article.NewsArticleId"
-                                data-title="@article.NewsTitle">
-                            Xóa
-                        </button>
+                        @* Only show Delete button if article belongs to current user *@
+                        @if (article.CreatedById == Model.CurrentUserId)
+                        {
+                            <button type="button" class="btn btn-sm btn-danger btn-delete-article"
+                                    data-id="@article.NewsArticleId"
+                                    data-title="@article.NewsTitle">
+                                Xóa
+                            </button>
+                        }
                     </td>
                 </tr>
             }
