@@ -1,0 +1,6 @@
+@FUNewsManagement_v2_AnalyticsAPI_HostAddress = http://localhost:5031
+
+GET {{FUNewsManagement_v2_AnalyticsAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
