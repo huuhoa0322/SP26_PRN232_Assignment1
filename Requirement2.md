@@ -198,10 +198,10 @@ The system must demonstrate the ability to design a distributed architecture, co
 
 ## 6. Submission Guidelines
 
-- `FUNewsManagement_CoreAPI.sln`
-- `FUNewsManagement_AnalyticsAPI.sln`
-- `FUNewsManagement_AIAPI.sln`
-- `FUNewsManagement_FE.sln`
+- `FUNewsManagement_v2_CoreAPI.sln`
+- `FUNewsManagement_v2_AnalyticsAPI.sln`
+- `FUNewsManagement_v2_AIAPI.sln`
+- `FUNewsManagement_v2_FE.sln`
 - `FUNewsManagement.sql` (Database)
 - `README.md` describing setup, API URLs, and test accounts.
 - Screenshots: API responses, AI Tag Suggestion, Dashboard.
