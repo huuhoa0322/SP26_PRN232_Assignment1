@@ -1,8 +1,8 @@
 <Solution>
-  <Project Path="../../ASS02/FUNewsManagement_v2_FE/FUNewsManagement_v2_FE.csproj" Id="b9856a95-6753-47e4-935f-b7110e23bee9" />
-  <Project Path="../FUNewsManagement_v2_CoreAPI/FUNewsManagement_v2_CoreAPI.csproj" Id="2bb2eeb0-6efb-424a-a35b-9a1a266e35df" />
   <Project Path="FUNewsManagement_v2_AIAPI/FUNewsManagement_v2_AIAPI.csproj" Id="9aea345f-4e36-4bb5-aa54-6d8c0c5604df" />
   <Project Path="FUNewsManagement_v2_AnalyticsAPI/FUNewsManagement_v2_AnalyticsAPI.csproj" Id="0aaac0b2-fe8b-4053-b340-43fb793fbf24" />
+  <Project Path="FUNewsManagement_v2_CoreAPI/FUNewsManagement_v2_CoreAPI.csproj" Id="8198593b-8a94-4722-8cc0-d5da1a095a6e" />
+  <Project Path="FUNewsManagement_v2_FE/FUNewsManagement_v2_FE.csproj" Id="cba308ab-3a91-4b88-ad80-7a9c5feccd1a" />
   <Project Path="HE186716_DoHuuHoa_SE1884-NET_A01_BE/HE186716_DoHuuHoa_SE1884-NET_A01_BE.csproj" />
   <Project Path="HE186716_DoHuuHoa_SE1884-NET_A01_FE/HE186716_DoHuuHoa_SE1884-NET_A01_FE.csproj" />
 </Solution>
