@@ -1,4 +1,7 @@
 
+using FUNewsManagement_v2_CoreAPI.DataAccess.Models;
+using Microsoft.EntityFrameworkCore;
+
 namespace FUNewsManagement_v2_CoreAPI
 {
     public class Program
@@ -11,6 +14,10 @@ namespace FUNewsManagement_v2_CoreAPI
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+            // Configure DbContext
+            builder.Services.AddDbContext<FunewsManagementContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("MyCnn")));
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
