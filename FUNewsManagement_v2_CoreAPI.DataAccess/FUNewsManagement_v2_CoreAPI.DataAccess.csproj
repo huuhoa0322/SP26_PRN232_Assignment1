@@ -19,8 +19,4 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\FUNewsManagement_v2_CoreAPI.BusinessLogic\FUNewsManagement_v2_CoreAPI.BusinessLogic.csproj" />
-  </ItemGroup>
-
 </Project>
