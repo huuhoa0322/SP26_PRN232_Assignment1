@@ -1,0 +1,152 @@
+@page
+@model FUNewsManagement_v2_FE.Pages.Admin.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h2>Admin Dashboard</h2>
+
+<div class="row mb-4" id="statsCards">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h6 class="card-title">Total Accounts</h6>
+                <h2 id="totalAccounts">-</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h6 class="card-title">Staff</h6>
+                <h2 id="staffCount">-</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <h6 class="card-title">Lecturer</h6>
+                <h2 id="lecturerCount">-</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <h6 class="card-title">Total Audit Logs</h6>
+                <h2 id="totalLogs">-</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Last Login</h5>
+            </div>
+            <div class="card-body">
+                <p id="lastLogin">-</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Recent Activities (10 Latest)</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentActivities">
+                        <tr>
+                            <td colspan="4" class="text-center">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardStats();
+    });
+
+    async function loadDashboardStats() {
+        try {
+            const response = await fetch('/api/dashboard/stats');
+            const data = await response.json();
+            
+            if (data) {
+                // Update stat cards
+                document.getElementById('totalAccounts').textContent = data.totalAccounts || 0;
+                document.getElementById('staffCount').textContent = data.staffCount || 0;
+                document.getElementById('lecturerCount').textContent = data.lecturerCount || 0;
+                document.getElementById('totalLogs').textContent = data.totalAuditLogs || 0;
+                
+                // Update last login
+                if (data.lastLoginTime) {
+                    const lastLogin = new Date(data.lastLoginTime).toLocaleString('vi-VN');
+                    document.getElementById('lastLogin').textContent = lastLogin;
+                } else {
+                    document.getElementById('lastLogin').textContent = 'No login activity recorded';
+                }
+                
+                // Update recent activities
+                renderRecentActivities(data.recentActivities || []);
+            }
+        } catch (error) {
+            console.error('Error loading dashboard stats:', error);
+            showToast('Lỗi khi tải dashboard statistics', 'danger');
+        }
+    }
+
+    function renderRecentActivities(activities) {
+        const tbody = document.getElementById('recentActivities');
+        
+        if (activities.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No recent activities</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = activities.map(activity => {
+            const timestamp = activity.timestamp ? new Date(activity.timestamp).toLocaleString('vi-VN') : '';
+            return `
+                <tr>
+                    <td>${timestamp}</td>
+                    <td>${activity.userEmail || 'N/A'}</td>
+                    <td><span class="badge bg-info">${activity.action}</span></td>
+                    <td>${activity.entity}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function showToast(message, type) {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            alert(message);
+        }
+    }
+</script>
+}

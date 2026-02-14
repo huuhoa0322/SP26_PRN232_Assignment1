@@ -36,7 +36,50 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
 
         public async Task<LoginResponse?> LoginAsync(LoginRequest request)
         {
-            // Tìm user theo email
+            // ⭐ Check if this is admin account from appsettings.json (NOT in DB)
+            var adminEmail = _configuration["AdminAccount:Email"];
+            var adminPassword = _configuration["AdminAccount:Password"];
+            var adminName = _configuration["AdminAccount:Name"];
+
+            if (!string.IsNullOrEmpty(adminEmail) && request.Email.Equals(adminEmail, StringComparison.OrdinalIgnoreCase))
+            {
+                // Verify admin password (plain text comparison in config)
+                if (request.Password != adminPassword)
+                {
+                    return null;
+                }
+
+                // Create a virtual admin account object for JWT generation
+                var adminAccount = new SystemAccount
+                {
+                    AccountId = 0, // Admin doesn't have ID in DB
+                    AccountEmail = adminEmail,
+                    AccountName = adminName ?? "Administrator",
+                    AccountRole = 0 // 0 = Admin role
+                };
+
+                // Generate tokens
+                var accessToken = _jwtHelper.GenerateAccessToken(adminAccount);
+                var refreshToken = _jwtHelper.GenerateRefreshToken();
+
+                // Note: Admin refresh tokens are not stored in DB
+                // They expire after ExpiryMinutes but cannot be refreshed
+                return new LoginResponse
+                {
+                    AccessToken = accessToken,
+                    RefreshToken = refreshToken,
+                    ExpiresIn = int.Parse(_configuration["JwtSettings:ExpiryMinutes"]!) * 60,
+                    User = new AccountDto
+                    {
+                        AccountId = 0,
+                        AccountEmail = adminEmail,
+                        AccountName = adminName ?? "Administrator",
+                        AccountRole = 0
+                    }
+                };
+            }
+
+            // Regular account login (from database)
             var account = await _accountRepo.GetByEmailAsync(request.Email);
             if (account == null)
             {
@@ -50,8 +93,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             }
 
             // Generate tokens
-            var accessToken = _jwtHelper.GenerateAccessToken(account);
-            var refreshToken = _jwtHelper.GenerateRefreshToken();
+            var dbAccessToken = _jwtHelper.GenerateAccessToken(account);
+            var dbRefreshToken = _jwtHelper.GenerateRefreshToken();
 
             // Xóa expired tokens cũ
             await _refreshTokenRepo.DeleteExpiredTokensAsync(account.AccountId);
@@ -60,7 +103,7 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             var refreshTokenExpiryDays = int.Parse(_configuration["JwtSettings:RefreshTokenExpiryDays"]!);
             var refreshTokenEntity = new RefreshToken
             {
-                Token = refreshToken,
+                Token = dbRefreshToken,
                 AccountId = account.AccountId,
                 ExpiryDate = DateTime.UtcNow.AddDays(refreshTokenExpiryDays),
                 IsRevoked = false,
@@ -72,8 +115,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             // Return LoginResponse
             return new LoginResponse
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
+                AccessToken = dbAccessToken,
+                RefreshToken = dbRefreshToken,
                 ExpiresIn = int.Parse(_configuration["JwtSettings:ExpiryMinutes"]!) * 60, // Convert to seconds
                 User = _mapper.Map<AccountDto>(account)
             };

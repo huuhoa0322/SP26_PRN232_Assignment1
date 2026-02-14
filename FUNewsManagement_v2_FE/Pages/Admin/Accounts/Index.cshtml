@@ -1,0 +1,328 @@
+@page
+@model FUNewsManagement_v2_FE.Pages.Admin.Accounts.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Tài khoản";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Quản lý Tài khoản</h2>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#accountModal" onclick="openCreateModal()">
+        + Thêm tài khoản
+    </button>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-5">
+                <input type="text" id="searchKeyword" class="form-control" placeholder="Tìm theo tên hoặc email..." />
+            </div>
+            <div class="col-md-4">
+                <select id="roleFilter" class="form-select">
+                    <option value="">-- Tất cả vai trò --</option>
+                    <option value="1">Staff</option>
+                    <option value="2">Lecturer</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="button" class="btn btn-primary w-100" onclick="loadAccounts()">Tìm kiếm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>ID</th>
+            <th>Tên</th>
+            <th>Email</th>
+            <th>Vai trò</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody id="accountsTableBody">
+        <tr>
+            <td colspan="5" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+
+<div id="pagination" class="d-flex justify-content-center"></div>
+
+<!-- Account Modal -->
+<div class="modal fade" id="accountModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm tài khoản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="accountId" />
+                <input type="hidden" id="isEditMode" value="false" />
+                
+                <div class="mb-3">
+                    <label class="form-label">Tên <span class="text-danger">*</span></label>
+                    <input type="text" id="accountName" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                    <input type="email" id="accountEmail" class="form-control" required />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu <span class="text-danger" id="passwordRequired">*</span></label>
+                    <input type="password" id="accountPassword" class="form-control" />
+                    <small class="text-muted" id="passwordHint">Bắt buộc khi tạo mới</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Vai trò <span class="text-danger">*</span></label>
+                    <select id="accountRole" class="form-select" required>
+                        <option value="1">Staff</option>
+                        <option value="2">Lecturer</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveAccount()">Lưu</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc muốn xóa tài khoản: <strong id="deleteName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" id="deleteId" />
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="deleteAccount()">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentPage = 1;
+    let pageSize = 10;
+    let accountModal, deleteModal;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        accountModal = new bootstrap.Modal(document.getElementById('accountModal'));
+        deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        loadAccounts();
+    });
+
+    async function loadAccounts() {
+        const keyword = document.getElementById('searchKeyword').value.trim();
+        const role = document.getElementById('roleFilter').value;
+        
+        // Build filter
+        let filters = [];
+        if (keyword) {
+            filters.push(`(contains(AccountName,'${keyword}') or contains(AccountEmail,'${keyword}'))`);
+        }
+        if (role) {
+            filters.push(`AccountRole eq ${role}`);
+        }
+        
+        const filterStr = filters.length > 0 ? filters.join(' and ') : null;
+        
+        try {
+            const response = await fetch(`/api/accounts?filter=${encodeURIComponent(filterStr || '')}&top=${pageSize}&skip=${(currentPage-1)*pageSize}`);
+            const data = await response.json();
+            
+            if (data && data.value) {
+                renderAccountsTable(data.value);
+                renderPagination(data.count || data.value.length);
+            }
+        } catch (error) {
+            console.error('Error loading accounts:', error);
+            showToast('Lỗi khi tải danh sách tài khoản', 'danger');
+        }
+    }
+
+    function renderAccountsTable(accounts) {
+        const tbody = document.getElementById('accountsTableBody');
+        if (accounts.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không có dữ liệu</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = accounts.map(acc => `
+            <tr>
+                <td>${acc.accountId}</td>
+                <td>${acc.accountName || ''}</td>
+                <td>${acc.accountEmail || ''}</td>
+                <td>
+                    <span class="badge ${acc.accountRole == 1 ? 'bg-primary' : 'bg-secondary'}">
+                        ${acc.accountRole == 1 ? 'Staff' : 'Lecturer'}
+                    </span>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(acc)})'>Sửa</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal(${acc.accountId}, "${acc.accountName}")'>Xóa</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function renderPagination(total) {
+        const totalPages = Math.ceil(total / pageSize);
+        const pagination = document.getElementById('pagination');
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '<ul class="pagination">';
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Trước</a>
+                 </li>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                     </li>`;
+        }
+        
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Sau</a>
+                 </li>`;
+        html += '</ul>';
+        
+        pagination.innerHTML = html;
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadAccounts();
+    }
+
+    function openCreateModal() {
+        document.getElementById('modalTitle').textContent = 'Thêm tài khoản';
+        document.getElementById('isEditMode').value = 'false';
+        document.getElementById('accountId').value = '';
+        document.getElementById('accountName').value = '';
+        document.getElementById('accountEmail').value = '';
+        document.getElementById('accountPassword').value = '';
+        document.getElementById('accountPassword').required = true;
+        document.getElementById('passwordRequired').style.display = 'inline';
+        document.getElementById('passwordHint').textContent = 'Bắt buộc khi tạo mới';
+        document.getElementById('accountRole').value = '1';
+        accountModal.show();
+    }
+
+    function openEditModal(account) {
+        document.getElementById('modalTitle').textContent = 'Sửa tài khoản';
+        document.getElementById('isEditMode').value = 'true';
+        document.getElementById('accountId').value = account.accountId;
+        document.getElementById('accountName').value = account.accountName;
+        document.getElementById('accountEmail').value = account.accountEmail;
+        document.getElementById('accountPassword').value = '';
+        document.getElementById('accountPassword').required = false;
+        document.getElementById('passwordRequired').style.display = 'none';
+        document.getElementById('passwordHint').textContent = 'Để trống nếu không đổi mật khẩu';
+        document.getElementById('accountRole').value = account.accountRole;
+        accountModal.show();
+    }
+
+    function openDeleteModal(id, name) {
+        document.getElementById('deleteId').value = id;
+        document.getElementById('deleteName').textContent = name;
+        deleteModal.show();
+    }
+
+    async function saveAccount() {
+        const isEdit = document.getElementById('isEditMode').value === 'true';
+        const id = document.getElementById('accountId').value;
+        const name = document.getElementById('accountName').value.trim();
+        const email = document.getElementById('accountEmail').value.trim();
+        const password = document.getElementById('accountPassword').value;
+        const role = parseInt(document.getElementById('accountRole').value);
+
+        if (!name || !email) {
+            showToast('Vui lòng điền đầy đủ thông tin', 'danger');
+            return;
+        }
+
+        if (!isEdit && !password) {
+            showToast('Mật khẩu là bắt buộc khi tạo mới', 'danger');
+            return;
+        }
+
+        try {
+            const url = isEdit ? `/api/accounts/${id}` : '/api/accounts';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            const body = isEdit 
+                ? { accountName: name, accountEmail: email, accountRole: role, ...(password && { newPassword: password }) }
+                : { accountName: name, accountEmail: email, accountPassword: password, accountRole: role };
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (response.ok) {
+                showToast(isEdit ? 'Cập nhật thành công!' : 'Tạo tài khoản thành công!', 'success');
+                accountModal.hide();
+                loadAccounts();
+            } else {
+                const error = await response.text();
+                showToast('Lỗi: ' + error, 'danger');
+            }
+        } catch (error) {
+            console.error('Error saving account:', error);
+            showToast('Lỗi khi lưu tài khoản', 'danger');
+        }
+    }
+
+    async function deleteAccount() {
+        const id = document.getElementById('deleteId').value;
+        
+        try {
+            const response = await fetch(`/api/accounts/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                showToast('Xóa tài khoản thành công!', 'success');
+                deleteModal.hide();
+                loadAccounts();
+            } else {
+                showToast('Lỗi khi xóa tài khoản', 'danger');
+            }
+        } catch (error) {
+            console.error('Error deleting account:', error);
+            showToast('Lỗi khi xóa tài khoản', 'danger');
+        }
+    }
+
+    function showToast(message, type) {
+        // Use existing toast system from _Layout
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            alert(message);
+        }
+    }
+</script>
+}
+

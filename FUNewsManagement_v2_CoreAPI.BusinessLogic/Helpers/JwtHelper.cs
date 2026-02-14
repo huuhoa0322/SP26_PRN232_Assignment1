@@ -27,7 +27,7 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Helpers
             // Determine role name: Staff=1, Lecturer=2, Admin from appsettings email
             string roleName;
             var adminEmail = _configuration["AdminAccount:Email"];
-            if (account.AccountEmail.Equals(adminEmail, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(adminEmail) && account.AccountEmail.Equals(adminEmail, StringComparison.OrdinalIgnoreCase))
             {
                 roleName = "Admin";
             }
@@ -47,8 +47,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Helpers
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
-                new Claim(ClaimTypes.Email, account.AccountEmail),
-                new Claim(ClaimTypes.Name, account.AccountName),
+                new Claim(ClaimTypes.Email, account.AccountEmail!),
+                new Claim(ClaimTypes.Name, account.AccountName!),
                 new Claim(ClaimTypes.Role, roleName)
             };
 

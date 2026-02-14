@@ -10,7 +10,7 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController : ControllerBase 
+    public class AuthController : ControllerBase  
     {
         private readonly IAuthService _authService;
 
@@ -23,6 +23,7 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         /// Đăng nhập và nhận access token + refresh token
         /// </summary>
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var result = await _authService.LoginAsync(request);
@@ -38,6 +39,7 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         /// Làm mới access token bằng refresh token
         /// </summary>
         [HttpPost("refresh")]
+        [AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequest request)
         {
             var result = await _authService.RefreshTokenAsync(request.RefreshToken);

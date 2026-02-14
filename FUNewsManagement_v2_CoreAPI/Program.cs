@@ -4,6 +4,8 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Helpers;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Mappings;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Account;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.AuditLog;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Services;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Services.Interfaces;
 using FUNewsManagement_v2_CoreAPI.DataAccess.Models;
@@ -35,6 +37,8 @@ namespace FUNewsManagement_v2_CoreAPI
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddScoped<IDashboardService, DashboardService>();
             builder.Services.AddScoped<JwtHelper>();
 
             // Configure AutoMapper
@@ -62,9 +66,22 @@ namespace FUNewsManagement_v2_CoreAPI
                 });
 
             // Build OData EDM Model
+            // Build OData EDM Model
             var modelBuilder = new ODataConventionModelBuilder();
-            modelBuilder.EntitySet<SystemAccount>("Accounts");
-            modelBuilder.EntitySet<AuditLog>("AuditLogs");
+            modelBuilder.EntitySet<AccountDto>("Accounts");
+            modelBuilder.EntitySet<AuditLogDto>("AuditLogs");
+            
+            // Configure CORS for Frontend
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowFrontend", policy =>
+                {
+                    policy.WithOrigins("http://localhost:5000", "https://localhost:5001")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod()
+                          .AllowCredentials();
+                });
+            });
 
             // Add Controllers with OData support
             builder.Services.AddControllers()
@@ -78,7 +95,53 @@ namespace FUNewsManagement_v2_CoreAPI
                     .AddRouteComponents("odata", modelBuilder.GetEdmModel()));
 
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            
+            // Configure Swagger with JWT
+            builder.Services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                {
+                    Title = "FUNewsManagement Core API",
+                    Version = "v1",
+                    Description = "Core API with JWT Authentication, OData, and Admin Features"
+                });
+
+                // Define JWT Bearer security scheme
+                options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token."
+                });
+
+                // Require JWT for all endpoints
+                options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+                {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        new string[] {}
+                    }
+                });
+                
+                // Ignore OData controllers to avoid conflicts
+                options.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    // Exclude OData controllers (they start with /odata)
+                    if (apiDesc.RelativePath?.StartsWith("odata/") == true)
+                        return false;
+                    return true;
+                });
+            });
 
             var app = builder.Build();
 
@@ -88,6 +151,9 @@ namespace FUNewsManagement_v2_CoreAPI
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
+            
+            // Enable CORS
+            app.UseCors("AllowFrontend");
 
             app.UseAuthentication();
             app.UseAuthorization();
@@ -97,3 +163,4 @@ namespace FUNewsManagement_v2_CoreAPI
         }
     }
 }
+ 

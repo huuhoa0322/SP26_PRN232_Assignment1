@@ -40,12 +40,12 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
 
             if (from.HasValue)
             {
-                query = query.Where(log => log.Timestamp >= from.Value);
+                query = query.Where(log => log.Timestamp.HasValue && log.Timestamp.Value >= from.Value);
             }
 
             if (to.HasValue)
             {
-                query = query.Where(log => log.Timestamp <= to.Value);
+                query = query.Where(log => log.Timestamp.HasValue && log.Timestamp.Value <= to.Value);
             }
 
             return await query

@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace FUNewsManagement_v2_CoreAPI.DataAccess.Models;
 
 public partial class AuditLog
 {
+    [Key]
     public int LogId { get; set; }
 
     public short? UserId { get; set; }
