@@ -25,7 +25,7 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <button type="button" class="btn btn-primary w-100" onclick="loadAccounts()">Tìm kiếm</button>
+                <button type="button" class="btn btn-primary w-100" onclick="searchAccounts()">Tìm kiếm</button>
             </div>
         </div>
     </div>
@@ -74,8 +74,13 @@
                     <label class="form-label">Email <span class="text-danger">*</span></label>
                     <input type="email" id="accountEmail" class="form-control" required />
                 </div>
+                <div class="mb-3" id="oldPasswordGroup" style="display:none;">
+                    <label class="form-label">Mật khẩu cũ <span class="text-danger">*</span></label>
+                    <input type="password" id="oldAccountPassword" class="form-control" />
+                    <small class="text-muted">Bắt buộc nếu đổi mật khẩu mới</small>
+                </div>
                 <div class="mb-3">
-                    <label class="form-label">Mật khẩu <span class="text-danger" id="passwordRequired">*</span></label>
+                    <label class="form-label" id="passwordLabel">Mật khẩu <span class="text-danger" id="passwordRequired">*</span></label>
                     <input type="password" id="accountPassword" class="form-control" />
                     <small class="text-muted" id="passwordHint">Bắt buộc khi tạo mới</small>
                 </div>
@@ -127,6 +132,11 @@
         loadAccounts();
     });
 
+    function searchAccounts() {
+        currentPage = 1;
+        loadAccounts();
+    }
+
     async function loadAccounts() {
         const keyword = document.getElementById('searchKeyword').value.trim();
         const role = document.getElementById('roleFilter').value;
@@ -134,7 +144,18 @@
         // Build filter
         let filters = [];
         if (keyword) {
-            filters.push(`(contains(AccountName,'${keyword}') or contains(AccountEmail,'${keyword}'))`);
+            const lowerKeyword = keyword.toLowerCase();
+            let searchConditions = [];
+            // Case-insensitive search for Name and Email
+            searchConditions.push(`contains(tolower(AccountName), '${lowerKeyword}')`);
+            searchConditions.push(`contains(tolower(AccountEmail), '${lowerKeyword}')`);
+            
+            // If keyword is a number, allows search by ID
+            if (!isNaN(keyword) && Number.isInteger(Number(keyword))) {
+                searchConditions.push(`AccountId eq ${keyword}`);
+            }
+            
+            filters.push(`(${searchConditions.join(' or ')})`);
         }
         if (role) {
             filters.push(`AccountRole eq ${role}`);
@@ -175,7 +196,7 @@
                 </td>
                 <td>
                     <button type="button" class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(acc)})'>Sửa</button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal(${acc.accountId}, "${acc.accountName}")'>Xóa</button>
+                    <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal(${acc.accountId}, ${JSON.stringify(acc.accountName || "")})'>Xóa</button>
                 </td>
             </tr>
         `).join('');
@@ -220,10 +241,19 @@
         document.getElementById('accountId').value = '';
         document.getElementById('accountName').value = '';
         document.getElementById('accountEmail').value = '';
+        
+        // Setup password fields
+        document.getElementById('oldPasswordGroup').style.display = 'none';
+        document.getElementById('oldAccountPassword').value = '';
+        
+        // Reset label with asterisk
+        document.getElementById('passwordLabel').innerHTML = 'Mật khẩu <span class="text-danger" id="passwordRequired">*</span>';
+        
         document.getElementById('accountPassword').value = '';
         document.getElementById('accountPassword').required = true;
         document.getElementById('passwordRequired').style.display = 'inline';
         document.getElementById('passwordHint').textContent = 'Bắt buộc khi tạo mới';
+        
         document.getElementById('accountRole').value = '1';
         accountModal.show();
     }
@@ -234,10 +264,19 @@
         document.getElementById('accountId').value = account.accountId;
         document.getElementById('accountName').value = account.accountName;
         document.getElementById('accountEmail').value = account.accountEmail;
+        
+        // Setup password fields
+        document.getElementById('oldPasswordGroup').style.display = 'block';
+        document.getElementById('oldAccountPassword').value = '';
+        
+        // Change label to "New Password" (removes asterisk element)
+        document.getElementById('passwordLabel').innerHTML = 'Mật khẩu mới';
+        
         document.getElementById('accountPassword').value = '';
         document.getElementById('accountPassword').required = false;
-        document.getElementById('passwordRequired').style.display = 'none';
+        // No need to hide passwordRequired because it was removed by innerHTML update above
         document.getElementById('passwordHint').textContent = 'Để trống nếu không đổi mật khẩu';
+        
         document.getElementById('accountRole').value = account.accountRole;
         accountModal.show();
     }
@@ -254,7 +293,14 @@
         const name = document.getElementById('accountName').value.trim();
         const email = document.getElementById('accountEmail').value.trim();
         const password = document.getElementById('accountPassword').value;
-        const role = parseInt(document.getElementById('accountRole').value);
+        const oldPassword = document.getElementById('oldAccountPassword').value;
+        const roleVal = document.getElementById('accountRole').value;
+        const role = roleVal ? parseInt(roleVal) : 1;
+
+        if (isNaN(role)) {
+            showToast('Vai trò không hợp lệ', 'danger');
+            return;
+        }
 
         if (!name || !email) {
             showToast('Vui lòng điền đầy đủ thông tin', 'danger');
@@ -266,12 +312,22 @@
             return;
         }
 
+        if (isEdit && password && !oldPassword) {
+            showToast('Vui lòng nhập mật khẩu cũ để đổi mật khẩu mới', 'danger');
+            return;
+        }
+
         try {
             const url = isEdit ? `/api/accounts/${id}` : '/api/accounts';
             const method = isEdit ? 'PUT' : 'POST';
             
             const body = isEdit 
-                ? { accountName: name, accountEmail: email, accountRole: role, ...(password && { newPassword: password }) }
+                ? { 
+                    accountName: name, 
+                    accountEmail: email, 
+                    accountRole: role, 
+                    ...(password && { newPassword: password, oldPassword: oldPassword }) 
+                  }
                 : { accountName: name, accountEmail: email, accountPassword: password, accountRole: role };
 
             const response = await fetch(url, {
@@ -285,8 +341,17 @@
                 accountModal.hide();
                 loadAccounts();
             } else {
-                const error = await response.text();
-                showToast('Lỗi: ' + error, 'danger');
+                const errorText = await response.text();
+                try {
+                    const errorObj = JSON.parse(errorText);
+                    if (errorObj.message) {
+                        showToast('Lỗi: ' + errorObj.message, 'danger');
+                    } else {
+                        showToast('Lỗi: ' + errorText, 'danger');
+                    }
+                } catch (e) {
+                    showToast('Lỗi: ' + errorText, 'danger');
+                }
             }
         } catch (error) {
             console.error('Error saving account:', error);
@@ -307,7 +372,20 @@
                 deleteModal.hide();
                 loadAccounts();
             } else {
-                showToast('Lỗi khi xóa tài khoản', 'danger');
+                const errorText = await response.text();
+                try {
+                    const errorObj = JSON.parse(errorText);
+                    // Check if message is nested or direct
+                    // Core API returns { message: "..." }
+                    // Frontend Proxy returns the string of that JSON
+                    if (errorObj.message) {
+                        showToast(errorObj.message, 'danger');
+                    } else {
+                        showToast(errorText, 'danger');
+                    }
+                } catch (e) {
+                    showToast(errorText, 'danger');
+                }
             }
         } catch (error) {
             console.error('Error deleting account:', error);
@@ -315,14 +393,7 @@
         }
     }
 
-    function showToast(message, type) {
-        // Use existing toast system from _Layout
-        if (typeof window.showToast === 'function') {
-            window.showToast(message, type);
-        } else {
-            alert(message);
-        }
-    }
+
 </script>
 }
 

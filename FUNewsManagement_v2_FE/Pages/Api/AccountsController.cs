@@ -57,7 +57,9 @@ namespace FUNewsManagement_v2_FE.Pages.Api
                     AccountName = request.GetProperty("accountName").GetString()!,
                     AccountEmail = request.GetProperty("accountEmail").GetString()!,
                     AccountPassword = request.GetProperty("accountPassword").GetString()!,
-                    AccountRole = (short)request.GetProperty("accountRole").GetInt32()
+                    AccountRole = request.TryGetProperty("accountRole", out var roleProp) && roleProp.ValueKind == JsonValueKind.Number 
+                        ? (short)roleProp.GetInt32() 
+                        : (short)1 // Default to Staff if missing/invalid
                 };
 
                 var result = await _apiService.CreateAccountAsync(createRequest);
@@ -83,7 +85,10 @@ namespace FUNewsManagement_v2_FE.Pages.Api
                     AccountName = request.GetProperty("accountName").GetString(),
                     AccountEmail = request.GetProperty("accountEmail").GetString(),
                     NewPassword = request.TryGetProperty("newPassword", out var pwd) ? pwd.GetString() : null,
-                    AccountRole = (short)request.GetProperty("accountRole").GetInt32()
+                    OldPassword = request.TryGetProperty("oldPassword", out var oldPwd) ? oldPwd.GetString() : null,
+                    AccountRole = request.TryGetProperty("accountRole", out var roleProp) && roleProp.ValueKind == JsonValueKind.Number 
+                        ? (short)roleProp.GetInt32() 
+                        : null
                 };
 
                 var success = await _apiService.UpdateAccountAsync(id, updateRequest);

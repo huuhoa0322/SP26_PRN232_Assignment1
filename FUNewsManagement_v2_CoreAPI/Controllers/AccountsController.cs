@@ -105,6 +105,10 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
 
                 return Ok(new { message = "Xóa account thành công" });
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
             catch (Exception ex)
             {
                 // Foreign key constraint violation

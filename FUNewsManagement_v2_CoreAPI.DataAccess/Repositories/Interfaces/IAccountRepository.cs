@@ -21,5 +21,15 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories.Interfaces
         /// Tìm kiếm accounts theo filters
         /// </summary>
         Task<IEnumerable<SystemAccount>> SearchAsync(string? name, string? email, short? role);
+
+        /// <summary>
+        /// Get max account ID
+        /// </summary>
+        Task<int> GetMaxIdAsync();
+
+        /// <summary>
+        /// Check if account has created any articles
+        /// </summary>
+        Task<bool> HasCreatedArticlesAsync(short accountId);
     }
 }

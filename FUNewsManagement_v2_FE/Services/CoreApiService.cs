@@ -82,7 +82,10 @@ namespace FUNewsManagement_v2_FE.Services
             var response = await _httpClient.PostAsJsonAsync("/api/accounts", request);
             
             if (!response.IsSuccessStatusCode)
-                return null;
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
 
             return await response.Content.ReadFromJsonAsync<AccountDto>();
         }
@@ -94,7 +97,14 @@ namespace FUNewsManagement_v2_FE.Services
         {
             AddAuthorizationHeader();
             var response = await _httpClient.PutAsJsonAsync($"/api/accounts/{id}", request);
-            return response.IsSuccessStatusCode;
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -104,7 +114,14 @@ namespace FUNewsManagement_v2_FE.Services
         {
             AddAuthorizationHeader();
             var response = await _httpClient.DeleteAsync($"/api/accounts/{id}");
-            return response.IsSuccessStatusCode;
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+
+            return true;
         }
 
         /// <summary>
@@ -230,7 +247,10 @@ namespace FUNewsManagement_v2_FE.Services
 
     public class ODataResponse<T>
     {
+        [System.Text.Json.Serialization.JsonPropertyName("value")]
         public List<T> Value { get; set; } = new();
+
+        [System.Text.Json.Serialization.JsonPropertyName("@odata.count")]
         public int? Count { get; set; }
     }
 

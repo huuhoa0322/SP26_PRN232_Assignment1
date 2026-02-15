@@ -43,8 +43,12 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             // Hash password với BCrypt
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.AccountPassword);
 
+            var maxId = await _accountRepo.GetMaxIdAsync();
+            var newId = (short)(maxId + 1);
+
             var account = new SystemAccount
             {
+                AccountId = newId,
                 AccountName = request.AccountName,
                 AccountEmail = request.AccountEmail,
                 AccountPassword = hashedPassword,
@@ -110,8 +114,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
                 return false;
             }
 
-            // TODO: Check foreign key constraints (NewsArticle.CreatedByID)
-            // For now, let database handle the constraint
+            // Check foreign key constraints
+            if (await _accountRepo.HasCreatedArticlesAsync(id))
+            {
+                throw new InvalidOperationException("Tài khoản này đã tạo bài viết, không thể xóa.");
+            }
 
             await _accountRepo.DeleteAsync(account);
             return true;

@@ -62,27 +62,33 @@
 
     <div class="container">
         <main role="main" class="pb-3">
-            <!-- Toast notifications -->
+            <!-- Toast Container -->
+            <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
+
+            <!-- TempData Toast Logic -->
             @if (TempData["SuccessMessage"] != null)
             {
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        showToast('@Html.Raw(TempData["SuccessMessage"])', 'success');
+                    });
+                </script>
             }
             @if (TempData["ErrorMessage"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        showToast('@Html.Raw(TempData["ErrorMessage"])', 'danger');
+                    });
+                </script>
             }
             @if (TempData["InfoMessage"] != null)
             {
-                <div class="alert alert-info alert-dismissible fade show" role="alert">
-                    <i class="bi bi-info-circle-fill"></i> @TempData["InfoMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function () {
+                        showToast('@Html.Raw(TempData["InfoMessage"])', 'info');
+                    });
+                </script>
             }
 
             @RenderBody()

@@ -46,5 +46,17 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
 
             return await query.ToListAsync();
         }
+
+        public async Task<int> GetMaxIdAsync()
+        {
+            if (!await _dbSet.AnyAsync()) return 0;
+            return await _dbSet.MaxAsync(a => a.AccountId);
+        }
+
+        public async Task<bool> HasCreatedArticlesAsync(short accountId)
+        {
+            // Direct check on NewsArticles table to be sure
+            return await _context.NewsArticles.AnyAsync(n => n.CreatedById == accountId);
+        }
     }
 }
