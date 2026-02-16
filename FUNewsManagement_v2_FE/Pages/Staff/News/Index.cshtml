@@ -2,284 +2,149 @@
 @model FUNewsManagement_v2_FE.Pages.Staff.News.IndexModel
 @{
     ViewData["Title"] = "Quản lý Bài viết";
-    var currentUserId = Model.CurrentUserId;
 }
-
-<!-- Toast Container -->
-<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
-    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="d-flex">
-            <div class="toast-body" id="toastMessage"></div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-        </div>
-    </div>
-</div> 
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Quản lý Bài viết</h2>
-    <button type="button" class="btn btn-primary btn-create-article">
+    <button type="button" class="btn btn-primary" onclick="openCreateModal()">
         <i class="bi bi-plus-circle"></i> Thêm bài viết
     </button>
 </div>
 
 <!-- Search & Filter Form -->
-<div class="card mb-3">
+<div class="card mb-4">
     <div class="card-body">
-        <form method="get" class="row g-3">
+        <div class="row g-3">
             <div class="col-md-3">
                 <label class="form-label">Tìm kiếm</label>
-                <input type="text" name="Keyword" value="@Model.Keyword" class="form-control" placeholder="Tiêu đề, Headline..." />
+                <input type="text" id="searchKeyword" class="form-control" placeholder="Tiêu đề, Headline..." />
             </div>
             <div class="col-md-2">
                 <label class="form-label">Danh mục</label>
-                <select name="SearchCategoryId" class="form-select">
+                <select id="searchCategoryId" class="form-select">
                     <option value="">-- Tất cả --</option>
-                    @foreach (var cat in Model.Categories)
-                    {
-                        <option value="@cat.CategoryId" selected="@(Model.SearchCategoryId == cat.CategoryId.ToString())">@cat.CategoryName</option>
-                    }
                 </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label">Trạng thái</label>
-                <select name="SearchStatus" class="form-select">
+                <select id="searchStatus" class="form-select">
                     <option value="">-- Tất cả --</option>
-                    <option value="true" selected="@(Model.SearchStatus == true)">Hoạt động</option>
-                    <option value="false" selected="@(Model.SearchStatus == false)">Không hoạt động</option>
+                    <option value="true">Hoạt động</option>
+                    <option value="false">Không hoạt động</option>
                 </select>
             </div>
             <div class="col-md-2">
                 <label class="form-label">Từ ngày</label>
-                <input type="date" name="StartDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                <input type="date" id="startDate" class="form-control" />
             </div>
             <div class="col-md-2">
                 <label class="form-label">Đến ngày</label>
-                <input type="date" name="EndDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                <input type="date" id="endDate" class="form-control" />
             </div>
             <div class="col-md-1 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-search"></i> Tìm
+                <button type="button" class="btn btn-primary w-100" onclick="searchNews()">
+                    <i class="bi bi-search"></i>
                 </button>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<!-- Stats info -->
-@if (Model.TotalCount > 0)
-{
-    <div class="mb-3">
-        <small class="text-muted">
-            Hiển thị @((Model.PageIndex - 1) * Model.PageSize + 1) - @(Math.Min(Model.PageIndex * Model.PageSize, Model.TotalCount)) 
-            trong tổng số @Model.TotalCount bài viết
-        </small>
-    </div>
-}
-
-<div class="table-responsive">
-    <table class="table table-striped table-hover align-middle">
-        <thead class="table-dark">
-            <tr>
-                <th>Ảnh</th>
-                <th>Tiêu đề</th>
-                <th>Danh mục</th>
-                <th>Tác giả</th>
-                <th>Ngày tạo</th>
-                <th>Trạng thái</th>
-                <th>Thao tác</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.Articles.Any())
-            {
-                @foreach (var article in Model.Articles)
-                {
-                    <tr>
-                        <td>
-                            @if (!string.IsNullOrEmpty(article.ImageUrl))
-                            {
-                                <img src="@article.ImageUrl" alt="Thumb" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" />
-                            }
-                            else
-                            {
-                                <span class="text-muted"><i class="bi bi-image"></i></span>
-                            }
-                        </td>
-                        <td style="max-width: 300px;">
-                            <div class="fw-bold text-truncate" title="@article.NewsTitle">@article.NewsTitle</div>
-                            <small class="text-muted text-truncate d-block" title="@article.Headline">@article.Headline</small>
-                        </td>
-                        <td>@article.CategoryName</td>
-                        <td>@article.CreatedByName</td>
-                        <td>@article.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>
-                            <span class="badge @(article.NewsStatus == true ? "bg-success" : "bg-secondary")">
-                                @(article.NewsStatus == true ? "Active" : "Inactive")
-                            </span>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-warning btn-edit-article"
-                                    data-id="@article.NewsArticleId"
-                                    data-title="@article.NewsTitle"
-                                    data-headline="@article.Headline"
-                                    data-content="@article.NewsContent"
-                                    data-source="@article.NewsSource"
-                                    data-category="@article.CategoryId"
-                                    data-status="@article.NewsStatus"
-                                    data-image="@article.ImageUrl"
-                                    data-tags='@Json.Serialize(article.Tags?.Select(t => t.TagId).ToList() ?? new List<int>())'>
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            
-                            @* Only show Delete button if article belongs to current user (or Admin, handled by backend usually, but UI check helps) *@
-                            @if (article.CreatedById == currentUserId || User.IsInRole("Admin")) 
-                            { 
-                                <button type="button" class="btn btn-sm btn-danger btn-delete-article"
-                                        data-id="@article.NewsArticleId"
-                                        data-title="@article.NewsTitle">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            }
-                        </td>
-                    </tr>
-                }
-            }
-            else
-            {
-                <tr>
-                    <td colspan="7" class="text-center text-muted">Không có dữ liệu</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-</div>
+<!-- Table -->
+<table class="table table-striped table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>Ảnh</th>
+            <th>Tiêu đề</th>
+            <th>Danh mục</th>
+            <th>Tác giả</th>
+            <th>Ngày tạo</th>
+            <th>Trạng thái</th>
+            <th>Thao tác</th>
+        </tr>
+    </thead>
+    <tbody id="newsTableBody">
+        <tr>
+            <td colspan="7" class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
 
 <!-- Pagination -->
-@if (Model.TotalPages > 1)
-{
-    <nav>
-        <ul class="pagination justify-content-center">
-            <li class="page-item @(!Model.HasPreviousPage ? "disabled" : "")">
-                <a class="page-link" asp-page="./Index"
-                   asp-route-Keyword="@Model.Keyword"
-                   asp-route-SearchCategoryId="@Model.SearchCategoryId"
-                   asp-route-SearchStatus="@Model.SearchStatus"
-                   asp-route-StartDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                   asp-route-EndDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
-                   asp-route-PageIndex="@(Model.PageIndex - 1)">
-                    Trước
-                </a>
-            </li>
+<div id="pagination" class="d-flex justify-content-center"></div>
 
-            @{
-                var startPage = Math.Max(1, Model.PageIndex - 2);
-                var endPage = Math.Min(Model.TotalPages, Model.PageIndex + 2);
-            }
-
-            @for (var i = startPage; i <= endPage; i++)
-            {
-                <li class="page-item @(i == Model.PageIndex ? "active" : "")">
-                    <a class="page-link" asp-page="./Index" 
-                       asp-route-Keyword="@Model.Keyword"
-                       asp-route-SearchCategoryId="@Model.SearchCategoryId"
-                       asp-route-SearchStatus="@Model.SearchStatus"
-                       asp-route-StartDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                       asp-route-EndDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
-                       asp-route-PageIndex="@i">@i</a>
-                </li>
-            }
-
-            <li class="page-item @(!Model.HasNextPage ? "disabled" : "")">
-                <a class="page-link" asp-page="./Index"
-                   asp-route-Keyword="@Model.Keyword"
-                   asp-route-SearchCategoryId="@Model.SearchCategoryId"
-                   asp-route-SearchStatus="@Model.SearchStatus"
-                   asp-route-StartDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
-                   asp-route-EndDate="@Model.EndDate?.ToString("yyyy-MM-dd")"
-                   asp-route-PageIndex="@(Model.PageIndex + 1)">
-                    Sau
-                </a>
-            </li>
-        </ul>
-    </nav>
-}
-
-<!-- Article Modal -->
-<div class="modal fade" id="articleModal" tabindex="-1">
+<!-- News Modal -->
+<div class="modal fade" id="newsModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <form method="post" id="articleForm" enctype="multipart/form-data">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalTitle">Thêm bài viết</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitle">Thêm bài viết</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="newsId" />
+                <input type="hidden" id="isEditMode" value="false" />
+                
+                <div class="row mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
+                        <input type="text" id="newsTitle" class="form-control" required maxlength="200" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Danh mục <span class="text-danger">*</span></label>
+                        <select id="newsCategoryId" class="form-select" required>
+                            <option value="">-- Chọn danh mục --</option>
+                        </select>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <input type="hidden" name="ArticleId" id="articleId" />
-                    
-                    <div class="row mb-3">
-                        <div class="col-md-8">
-                            <label class="form-label">Tiêu đề <span class="text-danger">*</span></label>
-                            <input type="text" name="NewsTitle" id="newsTitle" class="form-control" maxlength="400" required />
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Danh mục <span class="text-danger">*</span></label>
-                            <select name="CategoryId" id="categoryId" class="form-select" required>
-                                <option value="">-- Chọn --</option>
-                                @foreach (var cat in Model.Categories)
-                                {
-                                    <option value="@cat.CategoryId">@cat.CategoryName</option>
-                                }
-                            </select>
-                        </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Headline <span class="text-danger">*</span></label>
+                    <textarea id="newsHeadline" class="form-control" rows="2" required maxlength="300"></textarea>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Nội dung</label>
+                    <textarea id="newsContent" class="form-control" rows="5"></textarea>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Nguồn</label>
+                        <input type="text" id="newsSource" class="form-control" maxlength="200" />
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Headline <span class="text-danger">*</span></label>
-                        <input type="text" name="Headline" id="headline" class="form-control" required maxlength="150" />
+                    <div class="col-md-6">
+                        <label class="form-label">Tags</label>
+                        <select id="newsTags" class="form-select" multiple size="3">
+                        </select>
+                        <small class="text-muted">Giữ Ctrl để chọn nhiều tags</small>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Nội dung</label>
-                        <textarea name="NewsContent" id="newsContent" class="form-control" rows="5" maxlength="4000"></textarea>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label">Ảnh đại diện</label>
-                        <input type="file" name="ImageFile" id="imageFile" class="form-control" accept="image/*" onchange="previewImage(this)" />
-                        <div class="mt-2">
-                             <img id="imagePreview" src="#" alt="Preview" style="max-width: 200px; max-height: 150px; display: none;" class="img-thumbnail" />
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Ảnh</label>
+                        <input type="file" id="newsImage" class="form-control" accept="image/*" />
+                        <div id="currentImagePreview" style="display:none; margin-top: 10px;">
+                            <img id="currentImage" src="" alt="Current" style="max-width: 200px; max-height: 200px;" />
                         </div>
                     </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Thẻ (Tags)</label>
-                        <select name="TagIds" id="tagIds" class="form-select" multiple size="5">
-                            @foreach (var tag in Model.Tags)
-                            {
-                                <option value="@tag.TagId">@tag.TagName</option>
-                            }
-                        </select> 
-                        <small class="text-muted">Giữ Ctrl để chọn nhiều</small>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-8 mb-3">
-                            <label class="form-label">Nguồn tin</label>
-                            <input type="text" name="NewsSource" id="newsSource" class="form-control" maxlength="400" />
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <div class="form-check mt-4">
-                                <input type="checkbox" name="NewsStatus" id="newsStatus" class="form-check-input" value="true" checked />
-                                <label class="form-check-label">Hoạt động</label>
-                            </div>
+                    <div class="col-md-6">
+                        <div class="form-check mt-4">
+                            <input type="checkbox" id="newsStatus" class="form-check-input" checked />
+                            <label class="form-check-label">Hoạt động</label>
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Lưu</button>
-                </div>
-            </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="saveNews()">Lưu</button>
+            </div>
         </div>
     </div>
 </div>
@@ -288,139 +153,402 @@
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form method="post" asp-page-handler="Delete" id="deleteForm">
-                <div class="modal-header">
-                    <h5 class="modal-title">Xác nhận xóa</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" name="deleteId" id="deleteId" />
-                    <p>Bạn có chắc muốn xóa bài viết: <strong id="deleteName"></strong>?</p>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="submit" class="btn btn-danger">Xóa</button>
-                </div>
-            </form>
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc muốn xóa bài viết: <strong id="deleteName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <input type="hidden" id="deleteId" />
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="deleteNews()">Xóa</button>
+            </div>
         </div>
     </div>
 </div>
 
 @section Scripts {
 <script>
-    // Toast logic
-    var message = '@Html.Raw(Model.Message ?? "")';
-    var isSuccess = @Json.Serialize(Model.IsSuccess);
-    if (message) {
-        var toast = document.getElementById('notificationToast');
-        document.getElementById('toastMessage').textContent = message;
-        toast.classList.remove('bg-success', 'bg-danger', 'text-white');
-        toast.classList.add(isSuccess ? 'bg-success' : 'bg-danger', 'text-white');
-         new bootstrap.Toast(toast, { autohide: true, delay: 4000 }).show();
+    let currentPage = 1;
+    let pageSize = 10;
+    let newsModal, deleteModal;
+    let categories = [];
+    let tags = [];
+    let currentUserId = null;
+
+    document.addEventListener('DOMContentLoaded', function() {
+        newsModal = new bootstrap.Modal(document.getElementById('newsModal'));
+        deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        loadCategories();
+        loadTags();
+        loadNews();
+        getCurrentUserId();
+    });
+
+    function searchNews() {
+        currentPage = 1;
+        loadNews();
     }
 
-    // Modal Logic
-    var articleModal = new bootstrap.Modal(document.getElementById('articleModal'));
-    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    async function getCurrentUserId() {
+        try {
+            const response = await fetch('/api/profile');
+            if (response.ok) {
+                const profile = await response.json();
+                currentUserId = profile.accountId;
+            }
+        } catch (error) {
+            console.error('Error getting current user:', error);
+        }
+    }
 
-    document.querySelector('.btn-create-article').addEventListener('click', function() {
-        openCreateModal();
-        articleModal.show();
-    });
+    async function loadCategories() {
+        try {
+            const response = await fetch('/api/categories?orderby=CategoryName asc&top=100');
+            const data = await response.json();
+            
+            if (data && data.value) {
+                categories = data.value.filter(c => c.isActive);
+                updateCategoryDropdowns();
+            }
+        } catch (error) {
+            console.error('Error loading categories:', error);
+        }
+    }
 
-    document.querySelectorAll('.btn-edit-article').forEach(btn => {
-        btn.addEventListener('click', function() {
-            var data = {
-                id: this.getAttribute('data-id'),
-                title: this.getAttribute('data-title'),
-                headline: this.getAttribute('data-headline'),
-                content: this.getAttribute('data-content'),
-                source: this.getAttribute('data-source'),
-                category: this.getAttribute('data-category'),
-                status: this.getAttribute('data-status'),
-                image: this.getAttribute('data-image'),
-                tags: this.getAttribute('data-tags')
-            };
-            openEditModal(data);
-            articleModal.show();
+    async function loadTags() {
+        try {
+            const response = await fetch('/api/tags?orderby=TagName asc&top=100', {
+                credentials: 'same-origin'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            if (data && data.value) {
+                tags = data.value;
+                updateTagsDropdown();
+            }
+        } catch (error) {
+            console.error('Error loading tags:', error);
+        }
+    }
+
+    function updateCategoryDropdowns() {
+        const searchSelect = document.getElementById('searchCategoryId');
+        const newsSelect = document.getElementById('newsCategoryId');
+        
+        searchSelect.innerHTML = '<option value="">-- Tất cả --</option>';
+        newsSelect.innerHTML = '<option value="">-- Chọn danh mục --</option>';
+        
+        categories.forEach(cat => {
+            const option1 = new Option(cat.categoryName, cat.categoryId);
+            const option2 = new Option(cat.categoryName, cat.categoryId);
+            searchSelect.add(option1);
+            newsSelect.add(option2);
         });
-    });
+    }
 
-    document.querySelectorAll('.btn-delete-article').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.getElementById('deleteId').value = this.getAttribute('data-id');
-            document.getElementById('deleteName').textContent = this.getAttribute('data-title');
-            deleteModal.show();
+    function updateTagsDropdown() {
+        const select = document.getElementById('newsTags');
+        select.innerHTML = '';
+        
+        tags.forEach(tag => {
+            const option = new Option(tag.tagName, tag.tagId);
+            select.add(option);
         });
-    });
+    }
+
+    async function loadNews() {
+        const keyword = document.getElementById('searchKeyword').value.trim();
+        const categoryId = document.getElementById('searchCategoryId').value;
+        const status = document.getElementById('searchStatus').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+        
+        // Build filter
+        let filters = [];
+        if (keyword) {
+            filters.push(`(contains(NewsTitle, '${keyword}') or contains(Headline, '${keyword}'))`);
+        }
+        if (categoryId) {
+            filters.push(`CategoryId eq ${categoryId}`);
+        }
+        if (status !== '') {
+            filters.push(`NewsStatus eq ${status}`);
+        }
+        if (startDate) {
+            filters.push(`CreatedDate ge ${startDate}T00:00:00Z`);
+        }
+        if (endDate) {
+            const endDateTime = new Date(endDate);
+            endDateTime.setDate(endDateTime.getDate() + 1);
+            filters.push(`CreatedDate lt ${endDateTime.toISOString()}`);
+        }
+        
+        const filterStr = filters.length > 0 ? filters.join(' and ') : null;
+        
+        try {
+            const response = await fetch(`/api/news?filter=${encodeURIComponent(filterStr || '')}&orderby=CreatedDate desc&top=${pageSize}&skip=${(currentPage-1)*pageSize}`);
+            const data = await response.json();
+            
+            if (data && data.value) {
+                renderNewsTable(data.value);
+                renderPagination(data.count || data.value.length);
+            }
+        } catch (error) {
+            console.error('Error loading news:', error);
+            showToast('Lỗi khi tải danh sách bài viết', 'danger');
+        }
+    }
+
+    function renderNewsTable(news) {
+        const tbody = document.getElementById('newsTableBody');
+        if (news.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có dữ liệu</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = news.map(article => {
+            const canDelete = currentUserId && (article.createdById === currentUserId);
+            return `
+                <tr>
+                    <td>
+                        ${article.imageUrl 
+                            ? `<img src="${article.imageUrl}" alt="Thumb" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" />` 
+                            : '<span class="text-muted"><i class="bi bi-image"></i></span>'}
+                    </td>
+                    <td style="max-width: 300px;">
+                        <div class="fw-bold text-truncate" title="${article.newsTitle || ''}">${article.newsTitle || ''}</div>
+                        <small class="text-muted text-truncate d-block" title="${article.headline || ''}">${article.headline || ''}</small>
+                    </td>
+                    <td>${article.categoryName || ''}</td>
+                    <td>${article.createdByName || ''}</td>
+                    <td>${article.createdDate ? new Date(article.createdDate).toLocaleString('vi-VN') : ''}</td>
+                    <td>
+                        <span class="badge ${article.newsStatus ? 'bg-success' : 'bg-secondary'}">
+                            ${article.newsStatus ? 'Active' : 'Inactive'}
+                        </span>
+                    </td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(article).replace(/'/g, "&apos;")})'>
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        ${canDelete ? `
+                            <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal("${article.newsArticleId}", ${JSON.stringify(article.newsTitle || "")})'>
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function renderPagination(total) {
+        const totalPages = Math.ceil(total / pageSize);
+        const pagination = document.getElementById('pagination');
+        
+        if (totalPages <= 1) {
+            pagination.innerHTML = '';
+            return;
+        }
+
+        let html = '<ul class="pagination">';
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage - 1}); return false;">Trước</a>
+                 </li>`;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i}</a>
+                     </li>`;
+        }
+        
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changePage(${currentPage + 1}); return false;">Sau</a>
+                 </li>`;
+        html += '</ul>';
+        
+        pagination.innerHTML = html;
+    }
+
+    function changePage(page) {
+        currentPage = page;
+        loadNews();
+    }
 
     function openCreateModal() {
         document.getElementById('modalTitle').textContent = 'Thêm bài viết';
-        document.getElementById('articleForm').action = '?handler=Create';
-        document.getElementById('articleId').value = '';
+        document.getElementById('isEditMode').value = 'false';
+        document.getElementById('newsId').value = '';
         document.getElementById('newsTitle').value = '';
-        document.getElementById('headline').value = '';
+        document.getElementById('newsHeadline').value = '';
         document.getElementById('newsContent').value = '';
         document.getElementById('newsSource').value = '';
+        document.getElementById('newsCategoryId').value = '';
         document.getElementById('newsStatus').checked = true;
-        document.getElementById('imageFile').value = '';
-        document.getElementById('imagePreview').style.display = 'none';
+        document.getElementById('newsImage').value = '';
+        document.getElementById('currentImagePreview').style.display = 'none';
         
-        // Reset category/tags
-        document.getElementById('categoryId').selectedIndex = 0;
-        var tagSelect = document.getElementById('tagIds');
-        for(var i=0; i<tagSelect.options.length; i++) tagSelect.options[i].selected = false;
+        // Clear tag selection
+        Array.from(document.getElementById('newsTags').options).forEach(opt => opt.selected = false);
+        
+        newsModal.show();
     }
 
-    function openEditModal(data) {
+    function openEditModal(article) {
         document.getElementById('modalTitle').textContent = 'Sửa bài viết';
-        document.getElementById('articleForm').action = '?handler=Update';
-        document.getElementById('articleId').value = data.id;
-        document.getElementById('newsTitle').value = data.title;
-        document.getElementById('headline').value = data.headline;
-        document.getElementById('newsContent').value = data.content;
-        document.getElementById('newsSource').value = data.source;
-        document.getElementById('categoryId').value = data.category;
-        document.getElementById('newsStatus').checked = (data.status === 'True' || data.status === 'true');
+        document.getElementById('isEditMode').value = 'true';
+        document.getElementById('newsId').value = article.newsArticleId;
+        document.getElementById('newsTitle').value = article.newsTitle || '';
+        document.getElementById('newsHeadline').value = article.headline || '';
+        document.getElementById('newsContent').value = article.newsContent || '';
+        document.getElementById('newsSource').value = article.newsSource || '';
+        document.getElementById('newsCategoryId').value = article.categoryId || '';
+        document.getElementById('newsStatus').checked = article.newsStatus;
+        document.getElementById('newsImage').value = '';
         
-        // Image preview
-        var imgPreview = document.getElementById('imagePreview');
-        if (data.image) {
-            imgPreview.src = data.image;
-            imgPreview.style.display = 'block';
+        // Show current image if exists
+        if (article.imageUrl) {
+            document.getElementById('currentImage').src = article.imageUrl;
+            document.getElementById('currentImagePreview').style.display = 'block';
         } else {
-            imgPreview.style.display = 'none';
+            document.getElementById('currentImagePreview').style.display = 'none';
         }
-        document.getElementById('imageFile').value = ''; // Reset file input
-
-        // Tags
-        var tagSelect = document.getElementById('tagIds');
-        for(var i=0; i<tagSelect.options.length; i++) tagSelect.options[i].selected = false;
         
-        try {
-            var tagMap = JSON.parse(data.tags); // List of TagIds
-            if (Array.isArray(tagMap)) {
-                for(var i=0; i<tagSelect.options.length; i++) {
-                    if (tagMap.includes(parseInt(tagSelect.options[i].value))) {
-                        tagSelect.options[i].selected = true;
-                    }
-                }
-            }
-        } catch(e) { console.error(e); }
+        // Set tags
+        const articleTagIds = (article.tags || []).map(t => t.tagId);
+        Array.from(document.getElementById('newsTags').options).forEach(opt => {
+            opt.selected = articleTagIds.includes(parseInt(opt.value));
+        });
+        
+        newsModal.show();
     }
 
-    function previewImage(input) {
-        var preview = document.getElementById('imagePreview');
-        if (input.files && input.files[0]) {
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            }
-            reader.readAsDataURL(input.files[0]);
-        } else {
-            preview.style.display = 'none';
+    function openDeleteModal(id, title) {
+        document.getElementById('deleteId').value = id;
+        document.getElementById('deleteName').textContent = title;
+        deleteModal.show();
+    }
+
+    async function saveNews() {
+        const isEdit = document.getElementById('isEditMode').value === 'true';
+        const id = document.getElementById('newsId').value;
+        const title = document.getElementById('newsTitle').value.trim();
+        const headline = document.getElementById('newsHeadline').value.trim();
+        const content = document.getElementById('newsContent').value.trim();
+        const source = document.getElementById('newsSource').value.trim();
+        const categoryId = document.getElementById('newsCategoryId').value;
+        const status = document.getElementById('newsStatus').checked;
+        const imageFile = document.getElementById('newsImage').files[0];
+        
+        // Get selected tags
+        const tagSelect = document.getElementById('newsTags');
+        const selectedTags = Array.from(tagSelect.selectedOptions).map(opt => parseInt(opt.value));
+
+        if (!title || !headline || !categoryId) {
+            showToast('Vui lòng điền đầy đủ thông tin bắt buộc', 'danger');
+            return;
         }
+
+        const formData = new FormData();
+        formData.append('NewsTitle', title);
+        formData.append('Headline', headline);
+        formData.append('NewsContent', content);
+        formData.append('NewsSource', source);
+        formData.append('CategoryId', categoryId);
+        formData.append('NewsStatus', status);
+        
+        selectedTags.forEach(tagId => {
+            formData.append('TagIds', tagId);
+        });
+        
+        if (imageFile) {
+            formData.append('ImageFile', imageFile);
+        }
+
+        try {
+            const url = isEdit ? `/api/news/${id}` : '/api/news';
+            const method = isEdit ? 'PUT' : 'POST';
+            
+            const response = await fetch(url, {
+                method: method,
+                body: formData
+            });
+
+            if (response.ok) {
+                showToast(isEdit ? 'Cập nhật bài viết thành công!' : 'Tạo bài viết thành công!', 'success');
+                newsModal.hide();
+                loadNews();
+            } else {
+                const error = await response.text();
+                showToast('Lỗi: ' + error, 'danger');
+            }
+        } catch (error) {
+            console.error('Error saving news:', error);
+            showToast('Lỗi khi lưu bài viết', 'danger');
+        }
+    }
+
+    async function deleteNews() {
+        const id = document.getElementById('deleteId').value;
+
+        try {
+            const response = await fetch(`/api/news/${id}`, {
+                method: 'DELETE',
+                credentials: 'same-origin'
+            });
+
+            if (response.ok) {
+                showToast('Xóa bài viết thành công!', 'success');
+                deleteModal.hide();
+                loadNews();
+            } else {
+                const error = await response.text();
+                showToast('Lỗi: ' + error, 'danger');
+            }
+        } catch (error) {
+            console.error('Error deleting news:', error);
+            showToast('Lỗi khi xóa bài viết: ' + error.message, 'danger');
+        }
+    }
+
+    function showToast(message, type) {
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+
+        const toastId = 'toast-' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
+        
+        const toastHTML = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">${message}</div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { autohide: true, delay: 3000 });
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            toastElement.remove();
+        });
     }
 </script>
 }

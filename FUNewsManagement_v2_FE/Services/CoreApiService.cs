@@ -335,25 +335,44 @@ namespace FUNewsManagement_v2_FE.Services
             try
             {
                 AddAuthorizationHeader();
-                
+
                 var queryParams = new List<string>();
                 if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
                 if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
                 if (top.HasValue) queryParams.Add($"$top={top}");
                 if (skip.HasValue) queryParams.Add($"$skip={skip}");
                 queryParams.Add("$count=true");
-                // Expand related data
-                queryParams.Add("$expand=Category,Tags,CreatedBy");
+
+                // NOTE: $expand doesn't work well with DTOs, we rely on Repository Include instead
+                // queryParams.Add("$expand=Category,Tags,CreatedBy");
 
                 var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
                 var url = $"/odata/NewsArticles{query}";
-                
+
+                Console.WriteLine($"Calling CoreAPI: {_httpClient.BaseAddress}{url}");
+
                 var response = await _httpClient.GetAsync(url);
-                if (!response.IsSuccessStatusCode) return null;
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    Console.WriteLine($"CoreAPI Error {response.StatusCode}: {errorContent}");
+                    return null;
+                }
+
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return await response.Content.ReadFromJsonAsync<ODataResponse<NewsArticleDto>>(options);
+                var result = await response.Content.ReadFromJsonAsync<ODataResponse<NewsArticleDto>>(options);
+
+                Console.WriteLine($"Received {result?.Value?.Count ?? 0} news articles from CoreAPI");
+
+                return result;
             }
-            catch { return null; }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Exception in GetNewsArticlesAsync: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return null;
+            }
         }
 
         public async Task<NewsArticleDto?> GetNewsArticleByIdAsync(string id)

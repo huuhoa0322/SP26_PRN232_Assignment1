@@ -23,6 +23,16 @@ namespace FUNewsManagement_v2_FE.Pages.Api
         {
             try
             {
+                // Check if session has token
+                var token = HttpContext.Session.GetString("JwtToken");
+                _logger.LogInformation($"GetCategories called. Has token: {!string.IsNullOrEmpty(token)}");
+
+                if (string.IsNullOrEmpty(token))
+                {
+                    _logger.LogWarning("No JWT token found in session");
+                    return Unauthorized("No authentication token found");
+                }
+
                 var result = await _apiService.GetCategoriesAsync(filter, orderby, top, skip);
                 if (result == null)
                     return StatusCode(500, "Failed to fetch categories");

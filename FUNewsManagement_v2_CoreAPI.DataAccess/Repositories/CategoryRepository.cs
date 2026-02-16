@@ -10,6 +10,16 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
         {
         }
 
+        // Override GetAllAsync to include related entities
+        public override async Task<IEnumerable<Category>> GetAllAsync()
+        {
+            return await _context.Categories
+                .Include(c => c.NewsArticles)
+                .Include(c => c.ParentCategory)
+                .OrderBy(c => c.CategoryName)
+                .ToListAsync();
+        }
+
         public async Task<bool> IsCategoryUsedAsync(short id)
         {
             return await _context.NewsArticles.AnyAsync(n => n.CategoryId == id);

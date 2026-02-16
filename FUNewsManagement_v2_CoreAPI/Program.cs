@@ -95,7 +95,11 @@ namespace FUNewsManagement_v2_CoreAPI
             {
                 options.AddPolicy("AllowFrontend", policy =>
                 {
-                    policy.WithOrigins("http://localhost:5000", "https://localhost:5001")
+                    policy.WithOrigins(
+                            "http://localhost:5000", 
+                            "https://localhost:5001",
+                            "http://localhost:5212",      // Add FE port
+                            "http://localhost:25949")     // Add IIS Express port
                           .AllowAnyHeader()
                           .AllowAnyMethod()
                           .AllowCredentials();

@@ -10,6 +10,15 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
         {
         }
 
+        // Override GetAllAsync to include related entities
+        public override async Task<IEnumerable<Tag>> GetAllAsync()
+        {
+            return await _context.Tags
+                .Include(t => t.NewsArticles)
+                .OrderBy(t => t.TagName)
+                .ToListAsync();
+        }
+
         public async Task<Tag?> GetByNameAsync(string name)
         {
             return await _context.Tags.FirstOrDefaultAsync(t => t.TagName == name);

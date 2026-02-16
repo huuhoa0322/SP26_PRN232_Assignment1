@@ -27,7 +27,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Mappings
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
 
             // Tag <-> TagDto
-            CreateMap<Tag, TagDto>();
+            CreateMap<Tag, TagDto>()
+                .ForMember(dest => dest.NewsCount, opt => opt.MapFrom(src => src.NewsArticles != null ? src.NewsArticles.Count : 0));
             CreateMap<CreateTagRequest, Tag>();
             CreateMap<UpdateTagRequest, Tag>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));
@@ -35,7 +36,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Mappings
             // NewsArticle <-> NewsArticleDto
             CreateMap<NewsArticle, NewsArticleDto>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.CategoryName : null))
-                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy != null ? src.CreatedBy.AccountName : null));
+                .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy != null ? src.CreatedBy.AccountName : null))
+                .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags));
             CreateMap<CreateNewsArticleRequest, NewsArticle>();
             CreateMap<UpdateNewsArticleRequest, NewsArticle>()
                 .ForAllMembers(opts => opts.Condition((src, dest, srcMember) => srcMember != null));

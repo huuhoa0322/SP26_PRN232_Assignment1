@@ -23,17 +23,6 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         }
 
         /// <summary>
-        /// GET /odata/NewsArticles - List
-        /// </summary>
-        [HttpGet("odata/NewsArticles")]
-        [EnableQuery(MaxTop = 100)]
-        public async Task<IActionResult> Get()
-        {
-            var articles = await _newsService.GetAllAsync();
-            return Ok(articles);
-        }
-
-        /// <summary>
         /// GET /api/news/{id} - Detail
         /// </summary>
         [HttpGet("api/news/{id}")]
