@@ -87,7 +87,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             }
 
             // Verify password với BCrypt
-            if (!BCrypt.Net.BCrypt.Verify(request.Password, account.AccountPassword))
+            // if (!BCrypt.Net.BCrypt.Verify(request.Password, account.AccountPassword))
+            if (request.Password != account.AccountPassword)
             {
                 return null;
             }

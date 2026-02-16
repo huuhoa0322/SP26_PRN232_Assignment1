@@ -1,6 +1,13 @@
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Auth;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Account;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.AuditLog;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Dashboard;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Category;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Tag;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.News;
 
 namespace FUNewsManagement_v2_FE.Services
 {
@@ -65,7 +72,8 @@ namespace FUNewsManagement_v2_FE.Services
                     return null;
                 }
 
-                return await response.Content.ReadFromJsonAsync<ODataResponse<AccountDto>>();
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return await response.Content.ReadFromJsonAsync<ODataResponse<AccountDto>>(options);
             }
             catch
             {
@@ -141,7 +149,8 @@ namespace FUNewsManagement_v2_FE.Services
             if (!response.IsSuccessStatusCode)
                 return null;
 
-            return await response.Content.ReadFromJsonAsync<ODataResponse<AuditLogDto>>();
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            return await response.Content.ReadFromJsonAsync<ODataResponse<AuditLogDto>>(options);
         }
 
         /// <summary>
@@ -172,6 +181,295 @@ namespace FUNewsManagement_v2_FE.Services
             return response.IsSuccessStatusCode;
         }
 
+        // =========================== CATEGORY Methods ===========================
+
+        public async Task<ODataResponse<CategoryDto>?> GetCategoriesAsync(string? filter = null, string? orderby = null, int? top = null, int? skip = null)
+        {
+            try
+            {
+                AddAuthorizationHeader();
+                
+                var queryParams = new List<string>();
+                if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
+                if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
+                if (top.HasValue) queryParams.Add($"$top={top}");
+                if (skip.HasValue) queryParams.Add($"$skip={skip}");
+                queryParams.Add("$count=true");
+
+                var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+                var url = $"/odata/Categories{query}";
+                
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return null;
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return await response.Content.ReadFromJsonAsync<ODataResponse<CategoryDto>>(options);
+            }
+            catch { return null; }
+        }
+
+        public async Task<CategoryDto?> GetCategoryByIdAsync(short id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.GetAsync($"/api/categories/{id}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<CategoryDto>();
+        }
+
+        public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryRequest request)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PostAsJsonAsync("/api/categories", request);
+            if (!response.IsSuccessStatusCode) 
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<CategoryDto>();
+        }
+
+        public async Task<CategoryDto?> UpdateCategoryAsync(short id, UpdateCategoryRequest request)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PutAsJsonAsync($"/api/categories/{id}", request);
+            if (!response.IsSuccessStatusCode) 
+            {
+                 var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<CategoryDto>();
+        }
+
+        public async Task<bool> DeleteCategoryAsync(short id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.DeleteAsync($"/api/categories/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return true;
+        }
+
+        public async Task<bool> ToggleCategoryStatusAsync(short id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PatchAsync($"/api/categories/{id}/status", null);
+            return response.IsSuccessStatusCode;
+        }
+
+        // =========================== TAG Methods ===========================
+
+        public async Task<ODataResponse<TagDto>?> GetTagsAsync(string? filter = null, string? orderby = null, int? top = null, int? skip = null)
+        {
+            try
+            {
+                AddAuthorizationHeader();
+                
+                var queryParams = new List<string>();
+                if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
+                if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
+                if (top.HasValue) queryParams.Add($"$top={top}");
+                if (skip.HasValue) queryParams.Add($"$skip={skip}");
+                queryParams.Add("$count=true");
+
+                var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+                var url = $"/odata/Tags{query}";
+                
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return null;
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return await response.Content.ReadFromJsonAsync<ODataResponse<TagDto>>(options);
+            }
+            catch { return null; }
+        }
+
+        public async Task<TagDto?> GetTagByIdAsync(int id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.GetAsync($"/api/tags/{id}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<TagDto>();
+        }
+
+        public async Task<TagDto?> CreateTagAsync(CreateTagRequest request)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PostAsJsonAsync("/api/tags", request);
+            if (!response.IsSuccessStatusCode) 
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<TagDto>();
+        }
+
+        public async Task<TagDto?> UpdateTagAsync(int id, UpdateTagRequest request)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PutAsJsonAsync($"/api/tags/{id}", request);
+            if (!response.IsSuccessStatusCode) 
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<TagDto>();
+        }
+
+        public async Task<bool> DeleteTagAsync(int id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.DeleteAsync($"/api/tags/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return true;
+        }
+
+        // =========================== NEWS ARTICLE Methods ===========================
+
+        public async Task<ODataResponse<NewsArticleDto>?> GetNewsArticlesAsync(string? filter = null, string? orderby = null, int? top = null, int? skip = null)
+        {
+            try
+            {
+                AddAuthorizationHeader();
+                
+                var queryParams = new List<string>();
+                if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
+                if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
+                if (top.HasValue) queryParams.Add($"$top={top}");
+                if (skip.HasValue) queryParams.Add($"$skip={skip}");
+                queryParams.Add("$count=true");
+                // Expand related data
+                queryParams.Add("$expand=Category,Tags,CreatedBy");
+
+                var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
+                var url = $"/odata/NewsArticles{query}";
+                
+                var response = await _httpClient.GetAsync(url);
+                if (!response.IsSuccessStatusCode) return null;
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return await response.Content.ReadFromJsonAsync<ODataResponse<NewsArticleDto>>(options);
+            }
+            catch { return null; }
+        }
+
+        public async Task<NewsArticleDto?> GetNewsArticleByIdAsync(string id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.GetAsync($"/api/news/{id}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<NewsArticleDto>();
+        }
+
+        public async Task<NewsArticleDto?> CreateNewsArticleAsync(CreateNewsArticleRequest request, Stream? imageStream, string? imageName)
+        {
+            AddAuthorizationHeader();
+            
+            using var content = new MultipartFormDataContent();
+            content.Add(new StringContent(request.NewsTitle), nameof(request.NewsTitle));
+            content.Add(new StringContent(request.Headline), nameof(request.Headline));
+            if (!string.IsNullOrEmpty(request.NewsContent)) content.Add(new StringContent(request.NewsContent), nameof(request.NewsContent));
+            if (!string.IsNullOrEmpty(request.NewsSource)) content.Add(new StringContent(request.NewsSource), nameof(request.NewsSource));
+            content.Add(new StringContent(request.CategoryId.ToString()), nameof(request.CategoryId));
+            content.Add(new StringContent(request.NewsStatus.ToString()), nameof(request.NewsStatus));
+            
+            if (request.TagIds != null && request.TagIds.Any())
+            {
+                foreach(var tagId in request.TagIds)
+                {
+                    content.Add(new StringContent(tagId.ToString()), "TagIds");
+                }
+            }
+
+            if (imageStream != null && !string.IsNullOrEmpty(imageName))
+            {
+                var imageContent = new StreamContent(imageStream);
+                imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg"); // Adjust based on file type if needed
+                content.Add(imageContent, "ImageFile", imageName);
+            }
+
+            var response = await _httpClient.PostAsync("/api/news", content);
+            
+            if (!response.IsSuccessStatusCode) 
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<NewsArticleDto>();
+        }
+
+        public async Task<NewsArticleDto?> UpdateNewsArticleAsync(string id, UpdateNewsArticleRequest request, Stream? imageStream, string? imageName)
+        {
+            AddAuthorizationHeader();
+            
+            using var content = new MultipartFormDataContent();
+            if (request.NewsTitle != null) content.Add(new StringContent(request.NewsTitle), nameof(request.NewsTitle));
+            if (request.Headline != null) content.Add(new StringContent(request.Headline), nameof(request.Headline));
+            if (request.NewsContent != null) content.Add(new StringContent(request.NewsContent), nameof(request.NewsContent));
+            if (request.NewsSource != null) content.Add(new StringContent(request.NewsSource), nameof(request.NewsSource));
+            if (request.CategoryId != null) content.Add(new StringContent(request.CategoryId.ToString()!), nameof(request.CategoryId));
+            if (request.NewsStatus != null) content.Add(new StringContent(request.NewsStatus.ToString()!), nameof(request.NewsStatus));
+
+            if (request.TagIds != null)
+            {
+                foreach(var tagId in request.TagIds)
+                {
+                    content.Add(new StringContent(tagId.ToString()), "TagIds");
+                }
+            }
+
+            if (imageStream != null && !string.IsNullOrEmpty(imageName))
+            {
+                var imageContent = new StreamContent(imageStream);
+                imageContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+                content.Add(imageContent, "ImageFile", imageName);
+            }
+
+            var response = await _httpClient.PutAsync($"/api/news/{id}", content);
+            
+             if (!response.IsSuccessStatusCode) 
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<NewsArticleDto>();
+        }
+        
+        public async Task<bool> DeleteNewsArticleAsync(string id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.DeleteAsync($"/api/news/{id}");
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return true;
+        }
+
+        public async Task<AccountDto?> GetProfileAsync()
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.GetAsync("/api/profile");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<AccountDto>();
+        }
+
+        public async Task<AccountDto?> UpdateProfileAsync(UpdateProfileRequest request)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PutAsJsonAsync("/api/profile", request);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<AccountDto>();
+        }
+
         private void AddAuthorizationHeader()
         {
             var token = _contextAccessor.HttpContext?.Session.GetString("JwtToken");
@@ -182,69 +480,6 @@ namespace FUNewsManagement_v2_FE.Services
         }
     }
 
-    #region DTOs
-
-    public class LoginResponse
-    {
-        public string AccessToken { get; set; } = null!;
-        public string RefreshToken { get; set; } = null!;
-    }
-
-    public class AccountDto
-    {
-        public short AccountId { get; set; }
-        public string? AccountName { get; set; }
-        public string? AccountEmail { get; set; }
-        public int? AccountRole { get; set; }
-    }
-
-    public class CreateAccountRequest
-    {
-        public string AccountName { get; set; } = null!;
-        public string AccountEmail { get; set; } = null!;
-        public string AccountPassword { get; set; } = null!;
-        public short? AccountRole { get; set; }
-    }
-
-    public class UpdateAccountRequest
-    {
-        public string? AccountName { get; set; }
-        public string? AccountEmail { get; set; }
-        public string? NewPassword { get; set; }
-        public string? OldPassword { get; set; }
-        public short? AccountRole { get; set; }
-    }
-
-    public class AuditLogDto
-    {
-        public int LogId { get; set; }
-        public short? UserId { get; set; }
-        public string? UserEmail { get; set; }
-        public string Action { get; set; } = null!;
-        public string Entity { get; set; } = null!;
-        public string? BeforeData { get; set; }
-        public string? AfterData { get; set; }
-        public DateTime? Timestamp { get; set; }
-    }
-
-    public class DashboardStatsDto
-    {
-        public int TotalAccounts { get; set; }
-        public int StaffCount { get; set; }
-        public int LecturerCount { get; set; }
-        public int TotalAuditLogs { get; set; }
-        public DateTime? LastLoginTime { get; set; }
-        public List<RecentActivityDto> RecentActivities { get; set; } = new();
-    }
-
-    public class RecentActivityDto
-    {
-        public string? UserEmail { get; set; }
-        public string Action { get; set; } = null!;
-        public string Entity { get; set; } = null!;
-        public DateTime? Timestamp { get; set; }
-    }
-
     public class ODataResponse<T>
     {
         [System.Text.Json.Serialization.JsonPropertyName("value")]
@@ -253,6 +488,4 @@ namespace FUNewsManagement_v2_FE.Services
         [System.Text.Json.Serialization.JsonPropertyName("@odata.count")]
         public int? Count { get; set; }
     }
-
-    #endregion
 }

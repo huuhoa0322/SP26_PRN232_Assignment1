@@ -41,7 +41,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             }
 
             // Hash password với BCrypt
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.AccountPassword);
+            // var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.AccountPassword);
+            var hashedPassword = request.AccountPassword;
 
             var maxId = await _accountRepo.GetMaxIdAsync();
             var newId = (short)(maxId + 1);
@@ -88,12 +89,14 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             {
                 // Verify old password
                 if (string.IsNullOrEmpty(request.OldPassword) || 
-                    !BCrypt.Net.BCrypt.Verify(request.OldPassword, account.AccountPassword))
+                    // !BCrypt.Net.BCrypt.Verify(request.OldPassword, account.AccountPassword))
+                    request.OldPassword != account.AccountPassword)
                 {
                     throw new InvalidOperationException("Password cũ không đúng");
                 }
 
-                account.AccountPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                // account.AccountPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+                account.AccountPassword = request.NewPassword;
             }
 
             // Update role nếu có

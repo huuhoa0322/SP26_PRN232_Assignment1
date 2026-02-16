@@ -1,5 +1,6 @@
 using FUNewsManagement_v2_FE.Services;
 using Microsoft.AspNetCore.Mvc;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Dashboard;
 
 namespace FUNewsManagement_v2_FE.Pages.Api
 {

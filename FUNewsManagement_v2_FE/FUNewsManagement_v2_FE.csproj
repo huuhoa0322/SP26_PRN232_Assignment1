@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.23" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FUNewsManagement_v2_CoreAPI.BusinessLogic\FUNewsManagement_v2_CoreAPI.BusinessLogic.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -41,7 +41,10 @@
                                     }
                                     else if (Context.Session.GetString("Role") == "Staff")
                                     {
-                                        <li><a class="dropdown-item" asp-page="/Staff/Index"><i class="bi bi-newspaper"></i> Quản lý tin tức</a></li>
+                                        <li><a class="dropdown-item" asp-page="/Staff/Categories/Index"><i class="bi bi-tags"></i> Quản lý Danh mục</a></li>
+                                        <li><a class="dropdown-item" asp-page="/Staff/Tags/Index"><i class="bi bi-hash"></i> Quản lý Tags</a></li>
+                                        <li><a class="dropdown-item" asp-page="/Staff/News/Index"><i class="bi bi-newspaper"></i> Quản lý Bài viết</a></li>
+                                        <li><a class="dropdown-item" asp-page="/Staff/Profile/Index"><i class="bi bi-person-badge"></i> Hồ sơ cá nhân</a></li>
                                         <li><hr class="dropdown-divider"></li>
                                     }
                                     <li><a class="dropdown-item" asp-page="/Auth/Logout"><i class="bi bi-box-arrow-right"></i> Đăng xuất</a></li>

@@ -6,6 +6,9 @@ using FUNewsManagement_v2_CoreAPI.BusinessLogic.Helpers;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Mappings;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Account;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.AuditLog;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.News;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Category;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Tag;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Services;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.Services.Interfaces;
 using FUNewsManagement_v2_CoreAPI.DataAccess.Models;
@@ -33,12 +36,18 @@ namespace FUNewsManagement_v2_CoreAPI
             builder.Services.AddScoped<IAccountRepository, AccountRepository>();
             builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
             builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+            builder.Services.AddScoped<ITagRepository, TagRepository>();
+            builder.Services.AddScoped<INewsArticleRepository, NewsArticleRepository>();
 
             // Register Services
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
             builder.Services.AddScoped<IDashboardService, DashboardService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
+            builder.Services.AddScoped<ITagService, TagService>();
+            builder.Services.AddScoped<INewsService, NewsService>();
             builder.Services.AddScoped<JwtHelper>();
 
             // Configure AutoMapper
@@ -66,10 +75,20 @@ namespace FUNewsManagement_v2_CoreAPI
                 });
 
             // Build OData EDM Model
-            // Build OData EDM Model
             var modelBuilder = new ODataConventionModelBuilder();
             modelBuilder.EntitySet<AccountDto>("Accounts");
+            modelBuilder.EntityType<AccountDto>().HasKey(a => a.AccountId);
+
             modelBuilder.EntitySet<AuditLogDto>("AuditLogs");
+            modelBuilder.EntityType<AuditLogDto>().HasKey(a => a.LogId);
+            modelBuilder.EntitySet<CategoryDto>("Categories");
+            modelBuilder.EntityType<CategoryDto>().HasKey(c => c.CategoryId);
+
+            modelBuilder.EntitySet<TagDto>("Tags");
+            modelBuilder.EntityType<TagDto>().HasKey(t => t.TagId);
+
+            modelBuilder.EntitySet<NewsArticleDto>("NewsArticles");
+            modelBuilder.EntityType<NewsArticleDto>().HasKey(n => n.NewsArticleId);
             
             // Configure CORS for Frontend
             builder.Services.AddCors(options =>
@@ -154,6 +173,8 @@ namespace FUNewsManagement_v2_CoreAPI
             
             // Enable CORS
             app.UseCors("AllowFrontend");
+
+            app.UseStaticFiles(); // Serve uploaded images
 
             app.UseAuthentication();
             app.UseAuthorization();

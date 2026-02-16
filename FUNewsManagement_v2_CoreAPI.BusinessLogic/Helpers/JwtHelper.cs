@@ -47,8 +47,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Helpers
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, account.AccountId.ToString()),
-                new Claim(ClaimTypes.Email, account.AccountEmail!),
-                new Claim(ClaimTypes.Name, account.AccountName!),
+                new Claim(ClaimTypes.Email, account.AccountEmail ?? string.Empty),
+                new Claim(ClaimTypes.Name, account.AccountName ?? string.Empty),
                 new Claim(ClaimTypes.Role, roleName)
             };
 

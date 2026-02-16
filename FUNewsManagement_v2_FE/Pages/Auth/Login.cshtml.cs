@@ -2,6 +2,7 @@ using FUNewsManagement_v2_FE.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.IdentityModel.Tokens.Jwt;
+using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.Auth;
 
 namespace FUNewsManagement_v2_FE.Pages.Auth
 {
