@@ -159,6 +159,22 @@ namespace FUNewsManagement_v2_FE.Pages.Api
                 return BadRequest(ex.Message);
             }
         }
+
+        [HttpPost("{id}/duplicate")]
+        public async Task<IActionResult> DuplicateNews(string id)
+        {
+            try
+            {
+                var result = await _apiService.DuplicateNewsArticleAsync(id);
+                if (result == null) return BadRequest("Failed to duplicate news article");
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in DuplicateNews");
+                return BadRequest(ex.Message);
+            }
+        }
     }
 
     public class NewsArticleCreateViewModel

@@ -17,6 +17,7 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
                 .Include(n => n.Category)
                 .Include(n => n.Tags)
                 .Include(n => n.CreatedBy)
+                .Include(n => n.UpdatedBy)
                 .OrderByDescending(n => n.CreatedDate)
                 .ToListAsync();
         }
@@ -27,6 +28,7 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
                 .Include(n => n.Category)
                 .Include(n => n.Tags)
                 .Include(n => n.CreatedBy)
+                .Include(n => n.UpdatedBy)
                 .FirstOrDefaultAsync(n => n.NewsArticleId == id);
         }
 

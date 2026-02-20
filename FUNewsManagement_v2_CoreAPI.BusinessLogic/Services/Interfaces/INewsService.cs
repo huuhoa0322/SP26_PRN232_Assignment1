@@ -8,7 +8,7 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services.Interfaces
         Task<NewsArticleDto?> GetByIdAsync(string id);
         Task<NewsArticleDto> CreateAsync(CreateNewsArticleRequest request, short userId);
         Task<NewsArticleDto?> UpdateAsync(string id, UpdateNewsArticleRequest request, short userId);
-        Task<bool> DeleteAsync(string id);
+        Task<bool> DeleteAsync(string id, short userId);
         Task<NewsArticleDto?> DuplicateAsync(string id, short userId);
     }
 }

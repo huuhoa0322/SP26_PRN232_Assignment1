@@ -37,6 +37,7 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Mappings
             CreateMap<NewsArticle, NewsArticleDto>()
                 .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category != null ? src.Category.CategoryName : null))
                 .ForMember(dest => dest.CreatedByName, opt => opt.MapFrom(src => src.CreatedBy != null ? src.CreatedBy.AccountName : null))
+                .ForMember(dest => dest.UpdatedByName, opt => opt.MapFrom(src => src.UpdatedBy != null ? src.UpdatedBy.AccountName : null))
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.Tags));
             CreateMap<CreateNewsArticleRequest, NewsArticle>();
             CreateMap<UpdateNewsArticleRequest, NewsArticle>()

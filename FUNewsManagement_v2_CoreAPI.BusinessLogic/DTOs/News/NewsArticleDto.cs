@@ -17,6 +17,7 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.News
         public short? CreatedById { get; set; }
         public string? CreatedByName { get; set; }
         public short? UpdatedById { get; set; }
+        public string? UpdatedByName { get; set; }
         public DateTime? ModifiedDate { get; set; }
         public string? ImageUrl { get; set; }
         

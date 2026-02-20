@@ -41,10 +41,9 @@
                 <label class="form-label">Đến ngày</label>
                 <input type="date" id="endDate" class="form-control" />
             </div>
-            <div class="col-md-1 d-flex align-items-end">
-                <button type="button" class="btn btn-primary w-100" onclick="searchNews()">
-                    <i class="bi bi-search"></i>
-                </button>
+            <div class="col-md-1 d-flex align-items-end gap-1">
+                <button type="button" class="btn btn-primary" onclick="searchNews()">Tìm</button>
+                <button type="button" class="btn btn-secondary" onclick="resetSearch()">Reset</button>
             </div>
         </div>
     </div>
@@ -59,13 +58,15 @@
             <th>Danh mục</th>
             <th>Tác giả</th>
             <th>Ngày tạo</th>
+            <th>Người sửa cuối</th>
+            <th>Ngày sửa</th>
             <th>Trạng thái</th>
             <th>Thao tác</th>
         </tr>
     </thead>
     <tbody id="newsTableBody">
         <tr>
-            <td colspan="7" class="text-center">
+            <td colspan="9" class="text-center">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
@@ -171,6 +172,7 @@
 
 @section Scripts {
 <script>
+    const API_BASE_URL = '@(ViewContext.HttpContext.RequestServices.GetRequiredService<IConfiguration>()["CoreApiSettings:BaseUrl"] ?? "http://localhost:5042")';
     let currentPage = 1;
     let pageSize = 10;
     let newsModal, deleteModal;
@@ -188,6 +190,16 @@
     });
 
     function searchNews() {
+        currentPage = 1;
+        loadNews();
+    }
+
+    function resetSearch() {
+        document.getElementById('searchKeyword').value = '';
+        document.getElementById('searchCategoryId').value = '';
+        document.getElementById('searchStatus').value = '';
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
         currentPage = 1;
         loadNews();
     }
@@ -310,7 +322,7 @@
     function renderNewsTable(news) {
         const tbody = document.getElementById('newsTableBody');
         if (news.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">Không có dữ liệu</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted">Không có dữ liệu</td></tr>';
             return;
         }
 
@@ -320,7 +332,7 @@
                 <tr>
                     <td>
                         ${article.imageUrl 
-                            ? `<img src="${article.imageUrl}" alt="Thumb" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" />` 
+                            ? `<img src="${API_BASE_URL}/${article.imageUrl}" alt="Thumb" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;" />` 
                             : '<span class="text-muted"><i class="bi bi-image"></i></span>'}
                     </td>
                     <td style="max-width: 300px;">
@@ -330,6 +342,8 @@
                     <td>${article.categoryName || ''}</td>
                     <td>${article.createdByName || ''}</td>
                     <td>${article.createdDate ? new Date(article.createdDate).toLocaleString('vi-VN') : ''}</td>
+                    <td>${article.updatedByName || ''}</td>
+                    <td>${article.modifiedDate ? new Date(article.modifiedDate).toLocaleString('vi-VN') : ''}</td>
                     <td>
                         <span class="badge ${article.newsStatus ? 'bg-success' : 'bg-secondary'}">
                             ${article.newsStatus ? 'Active' : 'Inactive'}
@@ -337,11 +351,14 @@
                     </td>
                     <td>
                         <button type="button" class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(article).replace(/'/g, "&apos;")})'>
-                            <i class="bi bi-pencil"></i>
+                            Sửa
+                        </button>
+                        <button type="button" class="btn btn-sm btn-info" onclick='duplicateNews("${article.newsArticleId}")'>
+                            Sao chép
                         </button>
                         ${canDelete ? `
                             <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal("${article.newsArticleId}", ${JSON.stringify(article.newsTitle || "")})'>
-                                <i class="bi bi-trash"></i>
+                                Xóa
                             </button>
                         ` : ''}
                     </td>
@@ -416,7 +433,7 @@
         
         // Show current image if exists
         if (article.imageUrl) {
-            document.getElementById('currentImage').src = article.imageUrl;
+            document.getElementById('currentImage').src = `${API_BASE_URL}/${article.imageUrl}`;
             document.getElementById('currentImagePreview').style.display = 'block';
         } else {
             document.getElementById('currentImagePreview').style.display = 'none';
@@ -493,6 +510,27 @@
         } catch (error) {
             console.error('Error saving news:', error);
             showToast('Lỗi khi lưu bài viết', 'danger');
+        }
+    }
+
+    async function duplicateNews(id) {
+
+        try {
+            const response = await fetch(`/api/news/${id}/duplicate`, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+
+            if (response.ok) {
+                showToast('Sao chép bài viết thành công!', 'success');
+                loadNews();
+            } else {
+                const error = await response.text();
+                showToast('Lỗi: ' + error, 'danger');
+            }
+        } catch (error) {
+            console.error('Error duplicating news:', error);
+            showToast('Lỗi khi sao chép bài viết', 'danger');
         }
     }
 

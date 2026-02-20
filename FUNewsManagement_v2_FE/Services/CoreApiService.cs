@@ -469,6 +469,18 @@ namespace FUNewsManagement_v2_FE.Services
             return true;
         }
 
+        public async Task<NewsArticleDto?> DuplicateNewsArticleAsync(string id)
+        {
+            AddAuthorizationHeader();
+            var response = await _httpClient.PostAsync($"/api/news/{id}/duplicate", null);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception(error);
+            }
+            return await response.Content.ReadFromJsonAsync<NewsArticleDto>();
+        }
+
         public async Task<AccountDto?> GetProfileAsync()
         {
             AddAuthorizationHeader();

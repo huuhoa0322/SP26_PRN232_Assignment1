@@ -56,7 +56,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
         {
             if (file == null || file.Length == 0) return null;
 
-            var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads");
+            var webRootPath = _environment.WebRootPath ?? Path.Combine(_environment.ContentRootPath, "wwwroot");
+            var uploadsFolder = Path.Combine(webRootPath, "uploads");
             if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
             var uniqueFileName = Guid.NewGuid().ToString() + "_" + file.FileName;
@@ -142,10 +143,19 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             return _mapper.Map<NewsArticleDto>(article);
         }
 
-        public async Task<bool> DeleteAsync(string id)
+        public async Task<bool> DeleteAsync(string id, short userId)
         {
-            var article = await _newsRepository.GetByIdAsync(id);
+            var article = await _newsRepository.GetByIdWithDetailsAsync(id);
             if (article == null) return false;
+
+            // Enforce author-only delete
+            if (article.CreatedById != userId)
+                throw new UnauthorizedAccessException("Bạn chỉ có thể xóa bài viết do chính mình tạo");
+
+            // Clear Tags to avoid FK constraint on NewsTag table
+            article.Tags.Clear();
+            await _newsRepository.UpdateAsync(article);
+
             await _newsRepository.DeleteAsync(article);
             return true;
         }

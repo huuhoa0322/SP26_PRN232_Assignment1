@@ -79,9 +79,14 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         {
             try
             {
-                var success = await _newsService.DeleteAsync(id);
+                var userId = GetCurrentUserId();
+                var success = await _newsService.DeleteAsync(id, userId);
                 if (!success) return NotFound(new { message = "Bài viết không tồn tại" });
                 return Ok(new { message = "Xóa bài viết thành công" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -110,7 +115,7 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
 
         private short GetCurrentUserId()
         {
-            var userIdString = User.FindFirst("AccountId")?.Value;
+            var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (short.TryParse(userIdString, out short userId))
             {
                 return userId;
