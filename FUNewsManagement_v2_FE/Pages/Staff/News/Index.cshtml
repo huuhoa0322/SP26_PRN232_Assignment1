@@ -14,54 +14,55 @@
 <!-- Search & Filter Form -->
 <div class="card mb-4">
     <div class="card-body">
-        <div class="row g-3">
-            <div class="col-md-3">
+        <div class="row g-2">
+            <div class="col">
                 <label class="form-label">Tìm kiếm</label>
-                <input type="text" id="searchKeyword" class="form-control" placeholder="Tiêu đề, Headline..." />
+                <input type="text" id="searchKeyword" class="form-control form-control-sm" placeholder="Tiêu đề, Headline..." />
             </div>
-            <div class="col-md-2">
+            <div class="col">
                 <label class="form-label">Danh mục</label>
-                <select id="searchCategoryId" class="form-select">
+                <select id="searchCategoryId" class="form-select form-select-sm">
                     <option value="">-- Tất cả --</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col">
                 <label class="form-label">Trạng thái</label>
-                <select id="searchStatus" class="form-select">
+                <select id="searchStatus" class="form-select form-select-sm">
                     <option value="">-- Tất cả --</option>
                     <option value="true">Hoạt động</option>
                     <option value="false">Không hoạt động</option>
                 </select>
             </div>
-            <div class="col-md-2">
+            <div class="col">
                 <label class="form-label">Từ ngày</label>
-                <input type="date" id="startDate" class="form-control" />
+                <input type="date" id="startDate" class="form-control form-control-sm" />
             </div>
-            <div class="col-md-2">
+            <div class="col">
                 <label class="form-label">Đến ngày</label>
-                <input type="date" id="endDate" class="form-control" />
+                <input type="date" id="endDate" class="form-control form-control-sm" />
             </div>
-            <div class="col-md-1 d-flex align-items-end gap-1">
-                <button type="button" class="btn btn-primary" onclick="searchNews()">Tìm</button>
-                <button type="button" class="btn btn-secondary" onclick="resetSearch()">Reset</button>
+            <div class="col-auto d-flex align-items-end gap-1">
+                <button type="button" class="btn btn-primary btn-sm" onclick="searchNews()">Tìm</button>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="resetSearch()">Làm mới</button>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Table -->
-<table class="table table-striped table-hover align-middle">
+<div class="table-responsive">
+<table class="table table-striped table-hover table-sm align-middle" style="font-size: 0.85rem;">
     <thead class="table-dark">
         <tr>
-            <th>Ảnh</th>
-            <th>Tiêu đề</th>
-            <th>Danh mục</th>
-            <th>Tác giả</th>
-            <th>Ngày tạo</th>
-            <th>Người sửa cuối</th>
-            <th>Ngày sửa</th>
-            <th>Trạng thái</th>
-            <th>Thao tác</th>
+            <th class="text-nowrap text-center">Ảnh</th>
+            <th class="text-nowrap text-center">Tiêu đề</th>
+            <th class="text-nowrap text-center">Danh mục</th>
+            <th class="text-nowrap text-center">Tác giả</th>
+            <th class="text-nowrap text-center">Ngày tạo</th>
+            <th class="text-nowrap text-center">Người sửa cuối</th>
+            <th class="text-nowrap text-center">Ngày sửa</th>
+            <th class="text-nowrap text-center">Trạng thái</th>
+            <th class="text-nowrap text-center">Thao tác</th>
         </tr>
     </thead>
     <tbody id="newsTableBody">
@@ -74,6 +75,7 @@
         </tr>
     </tbody>
 </table>
+</div>
 
 <!-- Pagination -->
 <div id="pagination" class="d-flex justify-content-center"></div>
@@ -346,7 +348,7 @@
                     <td>${article.modifiedDate ? new Date(article.modifiedDate).toLocaleString('vi-VN') : ''}</td>
                     <td>
                         <span class="badge ${article.newsStatus ? 'bg-success' : 'bg-secondary'}">
-                            ${article.newsStatus ? 'Active' : 'Inactive'}
+                            ${article.newsStatus ? 'Hoạt động' : 'Không hoạt động'}
                         </span>
                     </td>
                     <td>
@@ -504,8 +506,10 @@
                 newsModal.hide();
                 loadNews();
             } else {
-                const error = await response.text();
-                showToast('Lỗi: ' + error, 'danger');
+                const errorText = await response.text();
+                let errorMsg = errorText;
+                try { const j = JSON.parse(errorText); if (j.message) errorMsg = j.message; } catch(e) {}
+                showToast(errorMsg, 'danger');
             }
         } catch (error) {
             console.error('Error saving news:', error);
@@ -525,8 +529,10 @@
                 showToast('Sao chép bài viết thành công!', 'success');
                 loadNews();
             } else {
-                const error = await response.text();
-                showToast('Lỗi: ' + error, 'danger');
+                const errorText = await response.text();
+                let errorMsg = errorText;
+                try { const j = JSON.parse(errorText); if (j.message) errorMsg = j.message; } catch(e) {}
+                showToast(errorMsg, 'danger');
             }
         } catch (error) {
             console.error('Error duplicating news:', error);
@@ -548,8 +554,10 @@
                 deleteModal.hide();
                 loadNews();
             } else {
-                const error = await response.text();
-                showToast('Lỗi: ' + error, 'danger');
+                const errorText = await response.text();
+                let errorMsg = errorText;
+                try { const j = JSON.parse(errorText); if (j.message) errorMsg = j.message; } catch(e) {}
+                showToast(errorMsg, 'danger');
             }
         } catch (error) {
             console.error('Error deleting news:', error);

@@ -267,8 +267,10 @@
                 tagModal.hide();
                 loadTags();
             } else {
-                const error = await response.text();
-                showToast('Lỗi: ' + error, 'danger');
+                const errorText = await response.text();
+                let errorMsg = errorText;
+                try { const j = JSON.parse(errorText); if (j.message) errorMsg = j.message; } catch(e) {}
+                showToast(errorMsg, 'danger');
             }
         } catch (error) {
             console.error('Error saving tag:', error);
@@ -290,8 +292,10 @@
                 deleteModal.hide();
                 loadTags();
             } else {
-                const error = await response.text();
-                showToast('Lỗi: ' + error, 'danger');
+                const errorText = await response.text();
+                let errorMsg = errorText;
+                try { const j = JSON.parse(errorText); if (j.message) errorMsg = j.message; } catch(e) {}
+                showToast(errorMsg, 'danger');
             }
         } catch (error) {
             console.error('Error deleting tag:', error);
