@@ -175,6 +175,25 @@ namespace FUNewsManagement_v2_FE.Pages.Api
                 return BadRequest(ex.Message);
             }
         }
+
+        /// <summary>
+        /// GET /api/news/{id}/recommend — proxies to Core API (anonymous, no auth required).
+        /// Returns up to 3 related articles by category/tag.
+        /// </summary>
+        [HttpGet("{id}/recommend")]
+        public async Task<IActionResult> GetRecommend(string id)
+        {
+            try
+            {
+                var related = await _apiService.GetRecommendAsync(id);
+                return Ok(related ?? new List<RecommendArticleDto>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in GetRecommend");
+                return Ok(new List<RecommendArticleDto>());  // Return empty, don't break page
+            }
+        }
     }
 
     public class NewsArticleCreateViewModel

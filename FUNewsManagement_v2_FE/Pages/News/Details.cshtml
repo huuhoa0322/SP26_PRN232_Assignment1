@@ -1,0 +1,154 @@
+@page "{id}"
+@model FUNewsManagement_v2_FE.Pages.News.DetailsModel
+@{
+    ViewData["Title"] = Model.Article?.NewsTitle ?? "Chi tiết tin tức";
+}
+
+@if (Model.Article == null)
+{
+    <div class="alert alert-warning">
+        Không tìm thấy bài viết. <a asp-page="/Index">Quay lại trang chủ</a>
+    </div>
+}
+else
+{
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-page="/Index">Trang chủ</a></li>
+            <li class="breadcrumb-item">Tin tức</li>
+            <li class="breadcrumb-item active">Chi tiết</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <!-- ── Main Article (col-lg-8) ─────────────────────────────────────── -->
+        <div class="col-lg-8">
+            <article>
+                <!-- Badges -->
+                <div class="mb-3">
+                    <span class="badge bg-primary">@Model.Article.CategoryName</span>
+                    @if (Model.Article.NewsStatus == true)
+                    {
+                        <span class="badge bg-success">Hoạt động</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-secondary">Không hoạt động</span>
+                    }
+                </div>
+
+                <h1>@Model.Article.NewsTitle</h1>
+                <p class="lead text-muted">@Model.Article.Headline</p>
+
+                <p class="text-muted small">
+                    Tác giả: <strong>@Model.Article.CreatedByName</strong> |
+                    Ngày đăng: @Model.Article.CreatedDate?.ToString("dd/MM/yyyy HH:mm")
+                    @if (!string.IsNullOrEmpty(Model.Article.NewsSource))
+                    {
+                        <span>| Nguồn: @Model.Article.NewsSource</span>
+                    }
+                </p>
+
+                @if (Model.Article.Tags.Any())
+                {
+                    <div class="mb-3">
+                        @foreach (var tag in Model.Article.Tags)
+                        {
+                            <span class="badge bg-light text-dark border me-1">#@tag.TagName</span>
+                        }
+                    </div>
+                }
+
+                <!-- Hero image (nếu có) -->
+                @if (!string.IsNullOrEmpty(Model.Article.ImageUrl))
+                {
+                    <div class="mb-4 text-center">
+                        <img src="@Model.GetImageUrl(Model.Article.ImageUrl)"
+                             alt="@Model.Article.NewsTitle"
+                             class="img-fluid rounded shadow-sm"
+                             onerror="this.style.display='none'" />
+                    </div>
+                }
+
+                <hr />
+
+                <div class="article-content" style="line-height:1.8; font-size:1.05rem;">
+                    @Html.Raw(Model.Article.NewsContent?.Replace("\n", "<br/>") ?? "")
+                </div>
+            </article>
+        </div>
+
+        <!-- ── Related Articles sidebar (col-lg-4) ───────────────────────── -->
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">Bài viết liên quan</div>
+                <div class="card-body" id="relatedContainer">
+                    <p class="text-muted mb-0">
+                        <span class="spinner-border spinner-border-sm me-1"></span>
+                        Đang tải...
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a asp-page="/Index" class="btn btn-outline-secondary">← Quay lại trang chủ</a>
+    </div>
+}
+
+@section Scripts {
+<script>
+    const CORE_API_BASE = '@Model.CoreApiBaseUrl';
+
+    function resolveImg(url) {
+        if (!url) return '';
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        return CORE_API_BASE + '/' + url.replace(/^\//, '');
+    }
+
+    (async function () {
+        const articleId = '@Model.Article?.NewsArticleId';
+        if (!articleId) return;
+
+        const container = document.getElementById('relatedContainer');
+        if (!container) return;
+
+        try {
+            const resp = await fetch(`/api/news/${articleId}/recommend`);
+            if (!resp.ok) throw new Error('fetch failed');
+            const related = await resp.json();
+
+            if (!Array.isArray(related) || related.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">Không có bài viết liên quan.</p>';
+                return;
+            }
+
+            // Show max 3
+            const items = related.slice(0, 3);
+            container.innerHTML = '<ul class="list-unstyled mb-0">' +
+                items.map(a => {
+                    const date = a.createdDate
+                        ? new Date(a.createdDate).toLocaleDateString('vi-VN') : '';
+                    const imgHtml = a.imageUrl
+                        ? `<img src="${resolveImg(a.imageUrl)}" alt="${a.newsTitle||''}"
+                               class="rounded me-2" style="width:56px;height:40px;object-fit:cover;flex-shrink:0;"
+                               onerror="this.style.display='none'" />`
+                        : '';
+                    return `<li class="mb-3 pb-2 border-bottom d-flex align-items-start">
+                        ${imgHtml}
+                        <div>
+                            <a href="/News/Details/${a.newsArticleId}" class="text-decoration-none fw-semibold lh-sm d-block">
+                                ${a.newsTitle || '(Không có tiêu đề)'}
+                            </a>
+                            <small class="text-muted">${date}</small>
+                        </div>
+                    </li>`;
+                }).join('') +
+                '</ul>';
+        } catch {
+            container.innerHTML = '<p class="text-muted mb-0">Không có bài viết liên quan.</p>';
+        }
+    })();
+</script>
+}

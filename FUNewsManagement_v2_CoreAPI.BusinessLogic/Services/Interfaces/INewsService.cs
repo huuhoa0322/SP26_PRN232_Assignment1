@@ -10,5 +10,6 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services.Interfaces
         Task<NewsArticleDto?> UpdateAsync(string id, UpdateNewsArticleRequest request, short userId);
         Task<bool> DeleteAsync(string id, short userId);
         Task<NewsArticleDto?> DuplicateAsync(string id, short userId);
+        Task<IEnumerable<NewsArticleDto>> GetRecommendAsync(string articleId, int count = 3);
     }
 }

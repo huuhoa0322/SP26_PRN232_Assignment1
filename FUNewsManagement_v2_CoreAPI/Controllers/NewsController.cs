@@ -113,6 +113,24 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// GET /api/recommend/{id} - Lấy bài viết liên quan (Public)
+        /// </summary>
+        [HttpGet("api/recommend/{id}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetRecommend([FromRoute] string id)
+        {
+            try
+            {
+                var related = await _newsService.GetRecommendAsync(id, 3);
+                return Ok(related);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
         private short GetCurrentUserId()
         {
             var userIdString = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

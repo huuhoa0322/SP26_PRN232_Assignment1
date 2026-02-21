@@ -77,10 +77,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
         {
             var article = _mapper.Map<NewsArticle>(request);
             
-            // Generate IDs? NewsArticleID is string(20).
-            // Logic: Could be random or numeric string. 
-            // Requirement doesn't specify logic. Let's use Timestamp or Guid substring.
-            article.NewsArticleId = GenerateId();
+            // Generate sequential numeric ID (max existing + 1)
+            article.NewsArticleId = await _newsRepository.GetNextIdAsync();
             
             article.CreatedById = userId;
             article.CreatedDate = DateTime.Now;
@@ -167,7 +165,7 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
 
             var copy = new NewsArticle
             {
-                NewsArticleId = GenerateId(),
+                NewsArticleId = await _newsRepository.GetNextIdAsync(),
                 NewsTitle = original.NewsTitle + " (Copy)",
                 Headline = original.Headline,
                 NewsContent = original.NewsContent,
@@ -186,11 +184,19 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             return _mapper.Map<NewsArticleDto>(copy);
         }
 
-        private string GenerateId()
+        public async Task<IEnumerable<NewsArticleDto>> GetRecommendAsync(string articleId, int count = 3)
         {
-             // Simple ID generator fitting in 20 chars
-             // Timeticks (18 chars) + Random (2 chars)
-             return DateTime.Now.Ticks.ToString();
+            var original = await _newsRepository.GetByIdWithDetailsAsync(articleId);
+            if (original == null || original.CategoryId == null) return new List<NewsArticleDto>();
+
+            var all = await _newsRepository.GetAllAsync();
+            var related = all.Where(n => n.CategoryId == original.CategoryId && 
+                                         n.NewsArticleId != articleId && 
+                                         n.NewsStatus == true)
+                             .OrderByDescending(n => n.CreatedDate)
+                             .Take(count);
+                             
+            return _mapper.Map<IEnumerable<NewsArticleDto>>(related);
         }
     }
 }

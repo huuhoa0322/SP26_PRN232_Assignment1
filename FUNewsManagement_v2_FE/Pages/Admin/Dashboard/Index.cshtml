@@ -1,152 +1,552 @@
 @page
 @model FUNewsManagement_v2_FE.Pages.Admin.Dashboard.IndexModel
 @{
-    ViewData["Title"] = "Admin Dashboard";
+    ViewData["Title"] = "Báo cáo thống kê";
 }
 
-<h2>Admin Dashboard</h2>
+<h2>Báo cáo thống kê</h2>
 
-<div class="row mb-4" id="statsCards">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h6 class="card-title">Total Accounts</h6>
-                <h2 id="totalAccounts">-</h2>
-            </div>
+<!-- Toast Container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
-                <h6 class="card-title">Staff</h6>
-                <h2 id="staffCount">-</h2>
+</div>
+
+<!-- Filter Card -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày</label>
+                <input type="date" id="startDate" class="form-control" />
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body">
-                <h6 class="card-title">Lecturer</h6>
-                <h2 id="lecturerCount">-</h2>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày</label>
+                <input type="date" id="endDate" class="form-control" />
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-dark">
-            <div class="card-body">
-                <h6 class="card-title">Total Audit Logs</h6>
-                <h2 id="totalLogs">-</h2>
+            <div class="col-md-2">
+                <label class="form-label">Danh mục</label>
+                <select id="filterCategory" class="form-select">
+                    <option value="">Tất cả</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Trạng thái</label>
+                <select id="filterStatus" class="form-select">
+                    <option value="">Tất cả</option>
+                    <option value="true">Hoạt động</option>
+                    <option value="false">Không hoạt động</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="button" class="btn btn-primary" onclick="applyFilters()">Tìm kiếm</button>
+                <button type="button" class="btn btn-success" id="btnExport" onclick="exportExcel()">
+                    <i class="bi bi-file-earmark-excel"></i> Xuất Excel
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>Last Login</h5>
+<!-- Stat Cards -->
+<div class="row mb-4" id="statCards">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body text-center">
+                <h3 id="sc-total">—</h3>
+                <p class="mb-0">Tổng bài viết</p>
             </div>
-            <div class="card-body">
-                <p id="lastLogin">-</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body text-center">
+                <h3 id="sc-active">—</h3>
+                <p class="mb-0">Bài viết Hoạt động</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-secondary">
+            <div class="card-body text-center">
+                <h3 id="sc-inactive">—</h3>
+                <p class="mb-0">Bài viết Không hoạt động</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5>Recent Activities (10 Latest)</h5>
+<!-- Main content area -->
+<div id="reportContent">
+
+    <!-- Row: Status table + Category table -->
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">Thống kê theo Trạng thái</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Trạng thái</th>
+                                <th>Số lượng</th>
+                                <th>Ngày tạo gần nhất</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusTableBody">
+                            <tr><td colspan="3" class="text-center text-muted">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-body">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>Time</th>
-                            <th>User</th>
-                            <th>Action</th>
-                            <th>Entity</th>
-                        </tr>
-                    </thead>
-                    <tbody id="recentActivities">
-                        <tr>
-                            <td colspan="4" class="text-center">
-                                <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card">
+                <div class="card-header">Thống kê theo Danh mục</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Danh mục</th>
+                                <th>Tổng</th>
+                                <th>Hoạt động</th>
+                                <th>Không hoạt động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryTableBody">
+                            <tr><td colspan="4" class="text-center text-muted">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
+    <!-- Row: Author table (full width) -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">Thống kê theo Tác giả</div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Tác giả</th>
+                                <th>Tổng</th>
+                                <th>Hoạt động</th>
+                                <th>Không hoạt động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="authorTableBody">
+                            <tr><td colspan="4" class="text-center text-muted">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row mt-3">
+        <div class="col-md-7 mb-3">
+            <div class="card">
+                <div class="card-header">Biểu đồ bài viết theo Danh mục</div>
+                <div class="card-body" style="position:relative;height:280px">
+                    <canvas id="chartByCategory"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-5 mb-3">
+            <div class="card">
+                <div class="card-header">Tỷ lệ Hoạt động / Không hoạt động</div>
+                <div class="card-body d-flex justify-content-center" style="position:relative;height:280px">
+                    <canvas id="chartByStatus"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending -->
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>🔥 Bài viết Trending</span>
+                    <small class="text-muted" id="trendingInfo"></small>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Tiêu đề</th>
+                                <th>Danh mục</th>
+                                <th>Ngày đăng</th>
+                                <th class="text-center">Tags</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trendingBody">
+                            <tr><td colspan="5" class="text-center text-muted">Đang tải...</td></tr>
+                        </tbody>
+                    </table>
+                    <nav id="trendingPagination" class="d-flex justify-content-center mt-2"></nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 @section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        loadDashboardStats();
+    let chartCategory = null;
+    let chartStatus   = null;
+
+    // ── Startup ───────────────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+        loadDashboard();
+        loadTrending();
+
+        // Validate dates on export
+        document.getElementById('btnExport').addEventListener('click', function(e) {
+            if (!validateDates()) { e.stopImmediatePropagation(); return; }
+            exportExcel();
+        });
     });
 
-    async function loadDashboardStats() {
+    function validateDates() {
+        const s = document.getElementById('startDate').value;
+        const e = document.getElementById('endDate').value;
+        if (s && e && new Date(s) > new Date(e)) {
+            showToast('Ngày bắt đầu không được sau ngày kết thúc!', false);
+            document.getElementById('startDate').focus();
+            return false;
+        }
+        return true;
+    }
+
+    // ── Filters ───────────────────────────────────────────────────────────────
+    function buildODataFilter() {
+        const parts = [];
+        const start  = document.getElementById('startDate').value;
+        const end    = document.getElementById('endDate').value;
+        const cat    = document.getElementById('filterCategory').value;
+        const status = document.getElementById('filterStatus').value;
+        if (start) parts.push(`CreatedDate ge ${start}T00:00:00Z`);
+        if (end)   parts.push(`CreatedDate le ${end}T23:59:59Z`);
+        if (cat)   parts.push(`CategoryId eq ${cat}`);
+        if (status !== '') parts.push(`NewsStatus eq ${status}`);
+        return parts.join(' and ');
+    }
+
+    function applyFilters() {
+        if (!validateDates()) return;
+        loadDashboard();
+        loadTrending();
+    }
+
+    // ── Dashboard Data ────────────────────────────────────────────────────────
+    async function loadDashboard() {
+        const filter = buildODataFilter();
+        let url = '/api/dashboard/analytics';
+        if (filter) url += `?$filter=${encodeURIComponent(filter)}`;
+
         try {
-            const response = await fetch('/api/dashboard/stats');
-            const data = await response.json();
-            
-            if (data) {
-                // Update stat cards
-                document.getElementById('totalAccounts').textContent = data.totalAccounts || 0;
-                document.getElementById('staffCount').textContent = data.staffCount || 0;
-                document.getElementById('lecturerCount').textContent = data.lecturerCount || 0;
-                document.getElementById('totalLogs').textContent = data.totalAuditLogs || 0;
-                
-                // Update last login
-                if (data.lastLoginTime) {
-                    const lastLogin = new Date(data.lastLoginTime).toLocaleString('vi-VN');
-                    document.getElementById('lastLogin').textContent = lastLogin;
-                } else {
-                    document.getElementById('lastLogin').textContent = 'No login activity recorded';
-                }
-                
-                // Update recent activities
-                renderRecentActivities(data.recentActivities || []);
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const data = await resp.json();
+
+            renderStatCards(data);
+            renderStatusTable(data);
+            renderCategoryTable(data);
+            renderAuthorTable(data);
+            renderCategoryChart(data);
+            renderStatusChart(data);
+            populateCategoryFilter(data);
+        } catch (e) {
+            console.error('Dashboard load error:', e);
+            showToast('Không thể tải dữ liệu. Kiểm tra Analytics API.', false);
+        }
+    }
+
+    // ── Stat Cards ────────────────────────────────────────────────────────────
+    function renderStatCards(items) {
+        document.getElementById('sc-total').textContent    = items.length;
+        document.getElementById('sc-active').textContent   = items.filter(i => i.newsStatus === true).length;
+        document.getElementById('sc-inactive').textContent = items.filter(i => i.newsStatus !== true).length;
+    }
+
+    // ── Status Table ──────────────────────────────────────────────────────────
+    function renderStatusTable(items) {
+        const active   = items.filter(i => i.newsStatus === true);
+        const inactive = items.filter(i => i.newsStatus !== true);
+
+        function latestDate(arr) {
+            if (!arr.length) return 'N/A';
+            const max = arr.reduce((a,b) =>
+                new Date(a.createdDate||0) > new Date(b.createdDate||0) ? a : b);
+            return max.createdDate ? new Date(max.createdDate).toLocaleString('vi-VN') : 'N/A';
+        }
+
+        const rows = [
+            { label: 'Hoạt động',         cls: 'bg-success', arr: active },
+            { label: 'Không hoạt động',   cls: 'bg-secondary', arr: inactive }
+        ];
+
+        document.getElementById('statusTableBody').innerHTML = rows.map(r => `
+            <tr>
+                <td><span class="badge ${r.cls}">${r.label}</span></td>
+                <td><strong>${r.arr.length}</strong></td>
+                <td>${latestDate(r.arr)}</td>
+            </tr>`).join('');
+    }
+
+    // ── Category Table ────────────────────────────────────────────────────────
+    function renderCategoryTable(items) {
+        const grouped = {};
+        items.forEach(i => {
+            const key = i.categoryName || 'Không có';
+            if (!grouped[key]) grouped[key] = { total:0, active:0, inactive:0 };
+            grouped[key].total++;
+            if (i.newsStatus === true) grouped[key].active++;
+            else grouped[key].inactive++;
+        });
+        const rows = Object.entries(grouped).sort((a,b) => b[1].total - a[1].total);
+
+        document.getElementById('categoryTableBody').innerHTML = rows.map(([name, g]) => `
+            <tr>
+                <td>${name}</td>
+                <td>${g.total}</td>
+                <td><span class="text-success">${g.active}</span></td>
+                <td><span class="text-muted">${g.inactive}</span></td>
+            </tr>`).join('') || '<tr><td colspan="4" class="text-muted text-center">Không có dữ liệu</td></tr>';
+    }
+
+    // ── Author Table ──────────────────────────────────────────────────────────
+    function renderAuthorTable(items) {
+        const grouped = {};
+        items.forEach(i => {
+            const key = i.authorName || 'Ẩn danh';
+            if (!grouped[key]) grouped[key] = { total:0, active:0, inactive:0 };
+            grouped[key].total++;
+            if (i.newsStatus === true) grouped[key].active++;
+            else grouped[key].inactive++;
+        });
+        const rows = Object.entries(grouped).sort((a,b) => b[1].total - a[1].total);
+
+        document.getElementById('authorTableBody').innerHTML = rows.map(([name, g]) => `
+            <tr>
+                <td>${name}</td>
+                <td>${g.total}</td>
+                <td><span class="text-success">${g.active}</span></td>
+                <td><span class="text-muted">${g.inactive}</span></td>
+            </tr>`).join('') || '<tr><td colspan="4" class="text-muted text-center">Không có dữ liệu</td></tr>';
+    }
+
+    // ── Category Bar Chart ────────────────────────────────────────────────────
+    function renderCategoryChart(items) {
+        const grouped = {};
+        items.forEach(i => {
+            const key = i.categoryName || 'Không có';
+            if (!grouped[key]) grouped[key] = { active:0, inactive:0 };
+            if (i.newsStatus === true) grouped[key].active++;
+            else grouped[key].inactive++;
+        });
+        const labels  = Object.keys(grouped).sort((a,b) =>
+            (grouped[b].active+grouped[b].inactive)-(grouped[a].active+grouped[a].inactive));
+
+        const ctx = document.getElementById('chartByCategory').getContext('2d');
+        if (chartCategory) chartCategory.destroy();
+        chartCategory = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [
+                    { label: 'Hoạt động',       data: labels.map(l=>grouped[l].active),   backgroundColor: '#198754', borderRadius: 4 },
+                    { label: 'Không hoạt động', data: labels.map(l=>grouped[l].inactive), backgroundColor: '#6c757d', borderRadius: 4 }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, ticks: { stepSize: 1 } } }
             }
-        } catch (error) {
-            console.error('Error loading dashboard stats:', error);
-            showToast('Lỗi khi tải dashboard statistics', 'danger');
+        });
+    }
+
+    // ── Status Doughnut ───────────────────────────────────────────────────────
+    function renderStatusChart(items) {
+        const active   = items.filter(i => i.newsStatus === true).length;
+        const inactive = items.filter(i => i.newsStatus !== true).length;
+
+        const ctx = document.getElementById('chartByStatus').getContext('2d');
+        if (chartStatus) chartStatus.destroy();
+        chartStatus = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Hoạt động', 'Không hoạt động'],
+                datasets: [{ data: [active, inactive], backgroundColor: ['#198754','#6c757d'], hoverOffset: 6 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: ctx => {
+                                const total = ctx.dataset.data.reduce((a,b)=>a+b,0);
+                                const pct   = total ? Math.round(ctx.parsed/total*100) : 0;
+                                return ` ${ctx.label}: ${ctx.parsed} (${pct}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // ── Category filter dropdown ──────────────────────────────────────────────
+    function populateCategoryFilter(items) {
+        const sel = document.getElementById('filterCategory');
+        const current = sel.value;
+        const cats = [...new Map(items.map(i=>[i.categoryId,i.categoryName])).entries()]
+            .filter(([id])=>id!==null)
+            .sort((a,b)=>(a[1]||'').localeCompare(b[1]||''));
+        sel.innerHTML = '<option value="">Tất cả</option>' +
+            cats.map(([id,name])=>`<option value="${id}"${id==current?' selected':''}>${name}</option>`).join('');
+    }
+
+    // ── Trending (client-side pagination, 10/trang) ───────────────────────────
+    let trendingData  = [];
+    let trendingPage  = 1;
+    const PAGE_SIZE   = 10;
+
+    async function loadTrending() {
+        trendingPage = 1;
+        document.getElementById('trendingBody').innerHTML =
+            '<tr><td colspan="5" class="text-center text-muted">Đang tải...</td></tr>';
+        document.getElementById('trendingPagination').innerHTML = '';
+        try {
+            // Load nhiều hơn để phân trang có ý nghĩa (200 bản ghi)
+            const resp = await fetch('/api/dashboard/trending?top=200');
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            trendingData = await resp.json();
+            renderTrendingPage();
+        } catch(e) {
+            document.getElementById('trendingBody').innerHTML =
+                '<tr><td colspan="5" class="text-center text-danger">Không thể tải trending</td></tr>';
         }
     }
 
-    function renderRecentActivities(activities) {
-        const tbody = document.getElementById('recentActivities');
-        
-        if (activities.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No recent activities</td></tr>';
-            return;
-        }
+    function renderTrendingPage() {
+        const total     = trendingData.length;
+        const totalPages = Math.ceil(total / PAGE_SIZE);
+        const start     = (trendingPage - 1) * PAGE_SIZE;
+        const pageItems = trendingData.slice(start, start + PAGE_SIZE);
 
-        tbody.innerHTML = activities.map(activity => {
-            const timestamp = activity.timestamp ? new Date(activity.timestamp).toLocaleString('vi-VN') : '';
-            return `
-                <tr>
-                    <td>${timestamp}</td>
-                    <td>${activity.userEmail || 'N/A'}</td>
-                    <td><span class="badge bg-info">${activity.action}</span></td>
-                    <td>${activity.entity}</td>
-                </tr>
-            `;
-        }).join('');
+        // Info
+        document.getElementById('trendingInfo').textContent =
+            total ? `${start+1}–${Math.min(start+PAGE_SIZE, total)} / ${total} bài` : '';
+
+        // Table rows
+        document.getElementById('trendingBody').innerHTML = pageItems.length
+            ? pageItems.map((item, i) => `<tr>
+                <td>${start + i + 1}</td>
+                <td title="${item.newsTitle||''}">${(item.newsTitle||'').length>60?(item.newsTitle||'').substring(0,60)+'…':item.newsTitle||'—'}</td>
+                <td>${item.categoryName||'—'}</td>
+                <td>${item.createdDate ? new Date(item.createdDate).toLocaleDateString('vi-VN') : '—'}</td>
+                <td class="text-center"><span class="badge bg-secondary">${item.tagCount}</span></td>
+            </tr>`).join('')
+            : '<tr><td colspan="5" class="text-center text-muted">Không có dữ liệu</td></tr>';
+
+        // Pagination
+        if (totalPages <= 1) { document.getElementById('trendingPagination').innerHTML = ''; return; }
+
+        let pages = '';
+        // Prev
+        pages += `<li class="page-item ${trendingPage===1?'disabled':''}"><a class="page-link" href="#" onclick="goTrendingPage(${trendingPage-1});return false;">«</a></li>`;
+        // Pages (show max 5 around current)
+        const from = Math.max(1, trendingPage - 2);
+        const to   = Math.min(totalPages, from + 4);
+        for (let p = from; p <= to; p++) {
+            pages += `<li class="page-item ${p===trendingPage?'active':''}"><a class="page-link" href="#" onclick="goTrendingPage(${p});return false;">${p}</a></li>`;
+        }
+        // Next
+        pages += `<li class="page-item ${trendingPage===totalPages?'disabled':''}"><a class="page-link" href="#" onclick="goTrendingPage(${trendingPage+1});return false;">»</a></li>`;
+
+        document.getElementById('trendingPagination').innerHTML =
+            `<ul class="pagination pagination-sm mb-0">${pages}</ul>`;
     }
 
-    function showToast(message, type) {
-        if (typeof window.showToast === 'function') {
-            window.showToast(message, type);
+    function goTrendingPage(page) {
+        const total = trendingData.length;
+        const totalPages = Math.ceil(total / PAGE_SIZE);
+        if (page < 1 || page > totalPages) return;
+        trendingPage = page;
+        renderTrendingPage();
+        // Scroll smooth đến bảng
+        document.getElementById('trendingBody').closest('.card').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // ── Excel Export ──────────────────────────────────────────────────────────
+    async function exportExcel() {
+        const btn = document.getElementById('btnExport');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Đang xuất...';
+        try {
+            const start = document.getElementById('startDate').value;
+            const end   = document.getElementById('endDate').value;
+            let url = '/api/dashboard/export';
+            const qs = [];
+            if (start) qs.push(`startDate=${start}`);
+            if (end)   qs.push(`endDate=${end}`);
+            if (qs.length) url += '?' + qs.join('&');
+
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            const blob = await resp.blob();
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `baocao_${start||'all'}_${end||'all'}.xlsx`;
+            link.click();
+            URL.revokeObjectURL(link.href);
+            showToast('Xuất Excel thành công!', true);
+        } catch(e) {
+            showToast('Lỗi khi xuất Excel. Kiểm tra Analytics API.', false);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-file-earmark-excel"></i> Xuất Excel';
+        }
+    }
+
+    // ── Toast (matching Report.cshtml pattern) ────────────────────────────────
+    function showToast(message, isSuccess) {
+        var toastEl  = document.getElementById('notificationToast');
+        var toastBody = document.getElementById('toastMessage');
+        var closeBtn  = toastEl.querySelector('.btn-close');
+
+        toastBody.textContent = message;
+        toastEl.classList.remove('text-bg-success','text-bg-danger','bg-success','bg-danger','text-white');
+        toastEl.style.backgroundColor = '';
+        toastEl.style.color = '';
+
+        if (isSuccess) {
+            toastEl.classList.add('bg-success','text-white');
+            toastEl.style.backgroundColor = '#198754';
         } else {
-            alert(message);
+            toastEl.classList.add('bg-danger','text-white');
+            toastEl.style.backgroundColor = '#dc3545';
         }
+        toastEl.style.color = '#ffffff';
+        closeBtn.classList.add('btn-close-white');
+
+        var toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 4000 });
+        toast.show();
     }
 </script>
 }

@@ -489,6 +489,19 @@ namespace FUNewsManagement_v2_FE.Services
             return await response.Content.ReadFromJsonAsync<AccountDto>();
         }
 
+        // ── Public Endpoints ──────────────────────────────────────────────────
+
+        public async Task<List<RecommendArticleDto>?> GetRecommendAsync(string articleId)
+        {
+            try
+            {
+                var response = await _httpClient.GetAsync($"/api/recommend/{articleId}");
+                if (!response.IsSuccessStatusCode) return null;
+                return await response.Content.ReadFromJsonAsync<List<RecommendArticleDto>>();
+            }
+            catch { return null; }
+        }
+
         public async Task<AccountDto?> UpdateProfileAsync(UpdateProfileRequest request)
         {
             AddAuthorizationHeader();
@@ -518,5 +531,15 @@ namespace FUNewsManagement_v2_FE.Services
 
         [System.Text.Json.Serialization.JsonPropertyName("@odata.count")]
         public int? Count { get; set; }
+    }
+
+    public class RecommendArticleDto
+    {
+        public string NewsArticleId { get; set; } = "";
+        public string? NewsTitle { get; set; }
+        public string? Headline { get; set; }
+        public DateTime? CreatedDate { get; set; }
+        public string? CategoryName { get; set; }
+        public string? ImageUrl { get; set; }
     }
 }

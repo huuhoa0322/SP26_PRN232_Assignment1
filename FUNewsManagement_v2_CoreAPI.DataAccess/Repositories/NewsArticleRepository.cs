@@ -32,6 +32,27 @@ namespace FUNewsManagement_v2_CoreAPI.DataAccess.Repositories
                 .FirstOrDefaultAsync(n => n.NewsArticleId == id);
         }
 
+        /// <summary>
+        /// Returns next sequential numeric ID: finds the maximum numeric value among all
+        /// existing IDs (ignoring non-numeric ones) and returns max+1.
+        /// Starts at 1 if no records exist.
+        /// </summary>
+        public async Task<string> GetNextIdAsync()
+        {
+            var ids = await _context.NewsArticles
+                .Select(n => n.NewsArticleId)
+                .ToListAsync();
+
+            long max = 0;
+            foreach (var id in ids)
+            {
+                if (long.TryParse(id, out var numericId) && numericId > max)
+                    max = numericId;
+            }
+
+            return (max + 1).ToString();
+        }
+
         // Note: For OData list, we rely on [EnableQuery] in controller to handle includes via $expand
     }
 }

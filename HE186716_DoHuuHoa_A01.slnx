@@ -1,5 +1,7 @@
 <Solution>
   <Project Path="FUNewsManagement_v2_AIAPI/FUNewsManagement_v2_AIAPI.csproj" Id="9aea345f-4e36-4bb5-aa54-6d8c0c5604df" />
+  <Project Path="FUNewsManagement_v2_AnalyticsAPI.BusinessLogic/FUNewsManagement_v2_AnalyticsAPI.BusinessLogic.csproj" Id="54451163-debb-4bbc-a994-91b7cda20337" />
+  <Project Path="FUNewsManagement_v2_AnalyticsAPI.DataAccess/FUNewsManagement_v2_AnalyticsAPI.DataAccess.csproj" Id="d6b63ca7-a506-4367-b4fe-a6f10fbbf30c" />
   <Project Path="FUNewsManagement_v2_AnalyticsAPI/FUNewsManagement_v2_AnalyticsAPI.csproj" Id="0aaac0b2-fe8b-4053-b340-43fb793fbf24" />
   <Project Path="FUNewsManagement_v2_CoreAPI.BusinessLogic/FUNewsManagement_v2_CoreAPI.BusinessLogic.csproj" Id="826bbe3b-b002-4429-b58a-5c2d1073c7ac" />
   <Project Path="FUNewsManagement_v2_CoreAPI.DataAccess/FUNewsManagement_v2_CoreAPI.DataAccess.csproj" Id="2c446851-cafd-47f6-816f-dc504984264f" />

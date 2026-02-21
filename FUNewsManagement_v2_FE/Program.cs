@@ -29,6 +29,13 @@ namespace FUNewsManagement_v2_FE
                 client.BaseAddress = new Uri(coreApiBaseUrl);
             });
 
+            // Add HttpClient for AnalyticsApiService
+            var analyticsApiBaseUrl = builder.Configuration["AnalyticsApiSettings:BaseUrl"] ?? "http://localhost:5142";
+            builder.Services.AddHttpClient<FUNewsManagement_v2_FE.Services.AnalyticsApiService>(client =>
+            {
+                client.BaseAddress = new Uri(analyticsApiBaseUrl);
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
