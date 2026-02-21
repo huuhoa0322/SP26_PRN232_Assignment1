@@ -148,7 +148,7 @@
         }
 
         try {
-            const response = await fetch(`/api/categories?filter=${encodeURIComponent(filter || '')}&orderby=CategoryName asc&top=${pageSize}&skip=${(currentPage-1)*pageSize}`);
+            const response = await fetch(`/api/categories?filter=${encodeURIComponent(filter || '')}&orderby=CategoryId asc&top=${pageSize}&skip=${(currentPage-1)*pageSize}`);
             const data = await response.json();
 
             if (data && data.value) {
@@ -163,7 +163,7 @@
 
     async function loadAllCategoriesForDropdown() {
         try {
-            const response = await fetch(`/api/categories?orderby=CategoryName asc&top=100`, {
+            const response = await fetch(`/api/categories?orderby=CategoryId asc&top=100`, {
                 credentials: 'same-origin'
             });
 

@@ -343,8 +343,8 @@ namespace FUNewsManagement_v2_FE.Services
                 if (skip.HasValue) queryParams.Add($"$skip={skip}");
                 queryParams.Add("$count=true");
 
-                // NOTE: $expand doesn't work well with DTOs, we rely on Repository Include instead
-                // queryParams.Add("$expand=Category,Tags,CreatedBy");
+                // Use $expand so OData includes the Tags collection which is already loaded by Repository
+                queryParams.Add("$expand=Tags");
 
                 var query = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
                 var url = $"/odata/NewsArticles{query}";

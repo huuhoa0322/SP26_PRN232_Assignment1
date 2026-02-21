@@ -346,6 +346,18 @@
                     const errorObj = JSON.parse(errorText);
                     if (errorObj.message) {
                         showToast('Lỗi: ' + errorObj.message, 'danger');
+                    } else if (errorObj.errors) {
+                        const errorMessages = [];
+                        for (const key in errorObj.errors) {
+                            if (Array.isArray(errorObj.errors[key])) {
+                                errorMessages.push(...errorObj.errors[key]);
+                            } else {
+                                errorMessages.push(errorObj.errors[key]);
+                            }
+                        }
+                        showToast('Lỗi: ' + errorMessages.join(', '), 'danger');
+                    } else if (errorObj.title) {
+                        showToast('Lỗi: ' + errorObj.title, 'danger');
                     } else {
                         showToast('Lỗi: ' + errorText, 'danger');
                     }
@@ -375,11 +387,20 @@
                 const errorText = await response.text();
                 try {
                     const errorObj = JSON.parse(errorText);
-                    // Check if message is nested or direct
-                    // Core API returns { message: "..." }
-                    // Frontend Proxy returns the string of that JSON
                     if (errorObj.message) {
                         showToast(errorObj.message, 'danger');
+                    } else if (errorObj.errors) {
+                        const errorMessages = [];
+                        for (const key in errorObj.errors) {
+                            if (Array.isArray(errorObj.errors[key])) {
+                                errorMessages.push(...errorObj.errors[key]);
+                            } else {
+                                errorMessages.push(errorObj.errors[key]);
+                            }
+                        }
+                        showToast(errorMessages.join(', '), 'danger');
+                    } else if (errorObj.title) {
+                        showToast(errorObj.title, 'danger');
                     } else {
                         showToast(errorText, 'danger');
                     }

@@ -26,10 +26,23 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         /// GET /api/news/{id} - Detail
         /// </summary>
         [HttpGet("api/news/{id}")]
+        [AllowAnonymous]
         public async Task<IActionResult> Get([FromRoute] string id)
         {
             var article = await _newsService.GetByIdAsync(id);
             if (article == null) return NotFound(new { message = "Bài viết không tồn tại" });
+
+            // If article is inactive, only Admin/Staff/Lecturer can view
+            if (article.NewsStatus != true)
+            {
+                var isAuthorized = User.Identity?.IsAuthenticated == true && 
+                                   (User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Lecturer"));
+                if (!isAuthorized)
+                {
+                    return NotFound(new { message = "Bài viết không tồn tại hoặc đã bị ẩn" });
+                }
+            }
+
             return Ok(article);
         }
 

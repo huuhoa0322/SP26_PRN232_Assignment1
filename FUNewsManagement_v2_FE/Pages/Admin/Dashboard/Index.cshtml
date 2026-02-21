@@ -44,7 +44,7 @@
             </div>
             <div class="col-md-2 d-flex gap-2">
                 <button type="button" class="btn btn-primary" onclick="applyFilters()">Tìm kiếm</button>
-                <button type="button" class="btn btn-success" id="btnExport" onclick="exportExcel()">
+                <button type="button" class="btn btn-success" id="btnExport">
                     <i class="bi bi-file-earmark-excel"></i> Xuất Excel
                 </button>
             </div>
@@ -512,8 +512,10 @@
             const blob = await resp.blob();
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
-            link.download = `baocao_${start||'all'}_${end||'all'}.xlsx`;
+            link.download = `baocao.xlsx`;
+            document.body.appendChild(link);
             link.click();
+            document.body.removeChild(link);
             URL.revokeObjectURL(link.href);
             showToast('Xuất Excel thành công!', true);
         } catch(e) {

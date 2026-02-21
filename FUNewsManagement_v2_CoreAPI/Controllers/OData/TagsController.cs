@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.OData.Routing.Controllers;
 
 namespace FUNewsManagement_v2_CoreAPI.Controllers.OData
 {
-    [Authorize]
+    [AllowAnonymous]
     public class TagsController : ODataController
     {
         private readonly ITagService _tagService;
@@ -21,6 +21,7 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers.OData
 
         [EnableQuery(MaxTop = 100)]
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Get()
         {
             try

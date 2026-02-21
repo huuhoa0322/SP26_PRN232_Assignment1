@@ -21,6 +21,7 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers.OData
 
         [EnableQuery(MaxTop = 100, MaxExpansionDepth = 3)]
         [HttpGet]
+        [AllowAnonymous]
         public async Task<IActionResult> Get()
         {
             try

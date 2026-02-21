@@ -189,9 +189,30 @@
         loadTags();
         loadNews();
         getCurrentUserId();
+        
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        if (startDateInput && endDateInput) {
+            startDateInput.addEventListener('change', validateDateRange);
+            endDateInput.addEventListener('change', validateDateRange);
+        }
     });
 
+    function validateDateRange() {
+        var startDate = document.getElementById('startDate').value;
+        var endDate = document.getElementById('endDate').value;
+        
+        if (startDate && endDate) {
+            if (new Date(startDate) > new Date(endDate)) {
+                showToast('Ngày bắt đầu không được sau ngày kết thúc', 'danger');
+                return false;
+            }
+        }
+        return true;
+    }
+
     function searchNews() {
+        if (!validateDateRange()) return;
         currentPage = 1;
         loadNews();
     }

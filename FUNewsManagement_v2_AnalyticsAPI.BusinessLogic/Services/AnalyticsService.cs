@@ -80,7 +80,9 @@ namespace FUNewsManagement_v2_AnalyticsAPI.BusinessLogic.Services
             if (endDate.HasValue)
                 query = query.Where(n => n.CreatedDate <= endDate.Value.AddDays(1));
 
-            var articles = await query.ToListAsync();
+            var articlesRaw = await query.ToListAsync();
+            // Đảm bảo không dính Duplicate Row do Cartesian Product từ Databse
+            var articles = articlesRaw.DistinctBy(a => a.NewsArticleId).ToList();
 
             using var workbook = new XLWorkbook();
 

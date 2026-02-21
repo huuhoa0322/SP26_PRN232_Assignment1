@@ -9,152 +9,59 @@
     <p class="lead">Hệ thống quản lý tin tức FPT University - Phiên bản 2</p>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="alert alert-info">
-            <h5>🎉 Chào mừng đến với FU News Management System v2!</h5>
-            <p class="mb-0">
-                Đây là hệ thống quản lý tin tức mới với các tính năng nâng cao:
-            </p>
-            <ul class="mt-2 mb-0">
-                <li><strong>Admin Dashboard:</strong> Quản lý tài khoản, xem audit logs và thống kê</li>
-                <li><strong>Staff Management:</strong> Quản lý danh mục, tin tức và tags</li>
-                <li><strong>Authentication:</strong> Đăng nhập an toàn với JWT</li>
-            </ul>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Tin tức mới nhất</h4>
+    <div>
+        <span class="badge bg-secondary">@Model.TotalCount bài viết</span>
     </div>
 </div>
 
-<div class="row">
-    @if (Model.IsAuthenticated)
-    {
-        <div class="col-md-6 mb-3">
-            <div class="card h-100 border-primary">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0">👤 Thông tin tài khoản</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Email:</strong> @Model.UserEmail</p>
-                    <p><strong>Tên:</strong> @Model.UserName</p>
-                    <p class="mb-0"><strong>Vai trò:</strong> 
-                        @if (Model.IsAdmin)
+@if (Model.Articles.Count == 0) 
+{
+    <div class="alert alert-info">
+        Chưa có tin tức nào.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var article in Model.Articles)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <span class="badge bg-primary mb-2">@article.CategoryName</span>
+                        @if (article.NewsStatus == true)
                         {
-                            <span class="badge bg-danger">Administrator</span>
+                            <span class="badge bg-success mb-2">Hoạt động</span>
                         }
-                        else if (Model.Role == "Staff")
+                        else if (Model.IsAuthenticated)
                         {
-                            <span class="badge bg-success">Staff</span>
+                            <span class="badge bg-warning text-dark mb-2">Không hoạt động</span>
                         }
-                        else
+                        <h5 class="card-title">
+                            <a asp-page="/News/Details" asp-route-id="@article.NewsArticleId" class="text-decoration-none">
+                                @(article.NewsTitle ?? article.Headline)
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted small">@article.Headline</p>
+                        @if (article.Tags.Any())
                         {
-                            <span class="badge bg-info">Lecturer</span>
+                            <div class="mt-2">
+                                @foreach (var tag in article.Tags)
+                                {
+                                    <span class="badge bg-light text-dark border me-1 mb-1">#@tag.TagName</span>
+                                }
+                            </div>
                         }
-                    </p>
-                </div>
-                <div class="card-footer">
-                    @if (Model.IsAdmin)
-                    {
-                        <a asp-page="/Admin/Dashboard/Index" class="btn btn-primary btn-sm">
-                            <i class="bi bi-gear"></i> Quản lý hệ thống
-                        </a>
-                    }
-                    else if (Model.Role == "Staff")
-                    {
-                        <a asp-page="/Staff/Index" class="btn btn-success btn-sm">
-                            <i class="bi bi-newspaper"></i> Quản lý tin tức
-                        </a>
-                    }
-                    <a asp-page="/Auth/Logout" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-box-arrow-right"></i> Đăng xuất
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 mb-3">
-            <div class="card h-100 border-success">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">📊 Quick Stats</h5>
-                </div>
-                <div class="card-body">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Total Accounts:</span>
-                        <strong>-</strong>
                     </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>News Articles:</span>
-                        <strong>-</strong>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span>Categories:</span>
-                        <strong>-</strong>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">
+                            @article.CreatedByName | @article.CreatedDate?.ToString("dd/MM/yyyy")
+                        </small>
                     </div>
                 </div>
-                <div class="card-footer text-muted small">
-                    <em>Statistics will be loaded from API</em>
-                </div>
             </div>
-        </div>
-    }
-    else
-    {
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0">🔐 Đăng nhập</h5>
-                </div>
-                <div class="card-body">
-                    <p>Vui lòng đăng nhập để sử dụng hệ thống quản lý tin tức.</p>
-                    <a asp-page="/Auth/Login" class="btn btn-primary">
-                        <i class="bi bi-box-arrow-in-right"></i> Đăng nhập ngay
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 mb-3">
-            <div class="card h-100">
-                <div class="card-header bg-secondary text-white">
-                    <h5 class="mb-0">ℹ️ Hướng dẫn</h5>
-                </div>
-                <div class="card-body">
-                    <p><strong>Tài khoản test:</strong></p>
-                    <ul class="small">
-                        <li>Admin: admin@FUNewsManagementSystem.org / @@abc123@@</li>
-                        <li>Staff: staff1@FUNewsManagementSystem.org / @@abc123@@</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    }
-</div>
-
-<div class="row mt-4">
-    <div class="col-md-4 mb-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <div class="display-4 text-primary">👥</div>
-                <h5 class="card-title">Account Management</h5>
-                <p class="card-text small">Quản lý tài khoản Staff và Lecturer</p>
-            </div>
-        </div>
+        }
     </div>
-    <div class="col-md-4 mb-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <div class="display-4 text-success">📰</div>
-                <h5 class="card-title">News Management</h5>
-                <p class="card-text small">Tạo, sửa, xóa tin tức và danh mục</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-4 mb-3">
-        <div class="card text-center">
-            <div class="card-body">
-                <div class="display-4 text-info">📊</div>
-                <h5 class="card-title">Analytics & Reports</h5>
-                <p class="card-text small">Dashboard và audit logs</p>
-            </div>
-        </div>
-    </div>
-</div> 
+}

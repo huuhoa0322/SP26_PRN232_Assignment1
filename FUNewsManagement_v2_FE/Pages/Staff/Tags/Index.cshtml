@@ -130,7 +130,7 @@
         }
 
         try {
-            const response = await fetch(`/api/tags?filter=${encodeURIComponent(filter || '')}&orderby=TagName asc&top=${pageSize}&skip=${(currentPage-1)*pageSize}`, {
+            const response = await fetch(`/api/tags?filter=${encodeURIComponent(filter || '')}&orderby=TagId asc&top=${pageSize}&skip=${(currentPage-1)*pageSize}`, {
                 credentials: 'same-origin'
             });
 
@@ -164,7 +164,7 @@
                 <td>${tag.note || ''}</td>
                 <td>
                     ${tag.newsCount > 0 
-                        ? `<span class="badge bg-primary">${tag.newsCount} bài viết</span>` 
+                        ? `<a href="/Staff/TagArticles?tagId=${tag.tagId}" class="badge bg-primary text-decoration-none">${tag.newsCount} bài viết</a>` 
                         : '<span class="text-muted">0 bài viết</span>'}
                 </td>
                 <td>

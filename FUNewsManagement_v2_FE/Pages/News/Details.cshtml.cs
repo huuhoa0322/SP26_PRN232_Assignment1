@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using FUNewsManagement_v2_CoreAPI.BusinessLogic.DTOs.News;
 using FUNewsManagement_v2_FE.Services;
@@ -22,10 +23,29 @@ namespace FUNewsManagement_v2_FE.Pages.News
         /// </summary>
         public string CoreApiBaseUrl { get; private set; } = "";
 
-        public async Task OnGetAsync(string id)
+        public async Task<IActionResult> OnGetAsync(string id)
         {
             CoreApiBaseUrl = _config["CoreApiSettings:BaseUrl"]?.TrimEnd('/') ?? "";
             Article = await _coreApi.GetNewsArticleByIdAsync(id);
+
+            if (Article == null)
+            {
+                // Article doesn't exist or user is unauthorized (e.g. inactive article for guest)
+                return RedirectToPage("/Index");
+            }
+
+            // Fallback FE check just in case
+            var role = HttpContext.Session.GetString("Role");
+            var isAdmin = HttpContext.Session.GetString("IsAdmin") == "True";
+
+            bool canSeeAll = (role == "Admin" || role == "Staff" || role == "Lecturer" || isAdmin);
+
+            if (Article.NewsStatus != true && !canSeeAll)
+            {
+                return RedirectToPage("/Index");
+            }
+
+            return Page();
         }
 
         /// <summary>Returns full URL for an image. Handles relative and absolute paths.</summary>

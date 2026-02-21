@@ -23,6 +23,9 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-page="/Index">Trang chủ</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-page="/News/Search">Tìm kiếm</a>
+                        </li>
                     </ul>
                     <ul class="navbar-nav">
                         @if (Context.Session.GetString("UserName") != null)
@@ -68,28 +71,42 @@
             <!-- Toast Container -->
             <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 
-            <!-- TempData Toast Logic -->
             @if (TempData["SuccessMessage"] != null)
             {
+                var toastId = Guid.NewGuid().ToString();
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
-                        showToast('@Html.Raw(TempData["SuccessMessage"])', 'success');
+                        var id = 'toast_' + '@toastId';
+                        if (!sessionStorage.getItem(id)) {
+                            showToast('@Html.Raw(TempData["SuccessMessage"])', 'success');
+                            sessionStorage.setItem(id, 'true');
+                        }
                     });
                 </script>
             }
             @if (TempData["ErrorMessage"] != null)
             {
+                var toastId = Guid.NewGuid().ToString();
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
-                        showToast('@Html.Raw(TempData["ErrorMessage"])', 'danger');
+                        var id = 'toast_' + '@toastId';
+                        if (!sessionStorage.getItem(id)) {
+                            showToast('@Html.Raw(TempData["ErrorMessage"])', 'danger');
+                            sessionStorage.setItem(id, 'true');
+                        }
                     });
                 </script>
             }
             @if (TempData["InfoMessage"] != null)
             {
+                var toastId = Guid.NewGuid().ToString();
                 <script>
                     document.addEventListener('DOMContentLoaded', function () {
-                        showToast('@Html.Raw(TempData["InfoMessage"])', 'info');
+                        var id = 'toast_' + '@toastId';
+                        if (!sessionStorage.getItem(id)) {
+                            showToast('@Html.Raw(TempData["InfoMessage"])', 'info');
+                            sessionStorage.setItem(id, 'true');
+                        }
                     });
                 </script>
             }

@@ -1,0 +1,390 @@
+﻿@page
+@model FUNewsManagement_v2_FE.Pages.News.SearchModel
+@{
+    ViewData["Title"] = "Tìm kiếm tin tức";
+}
+
+<!-- Toast Container -->
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div id="notificationToast" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+            <div class="toast-body" id="toastMessage"></div>
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+    </div>
+</div>
+
+<h2>Tìm kiếm tin tức</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form id="searchForm" method="post" class="row g-3">
+            <input type="hidden" name="currentPage" id="hdnCurrentPage" value="@Model.CurrentPage" />
+            <div class="col-md-6">
+                <label class="form-label">Từ khóa</label>
+                <input type="text" name="keyword" value="@Model.Keyword" class="form-control" placeholder="Tìm trong tiêu đề, nội dung..." />
+                <small class="text-muted">Tìm kiếm trong tiêu đề, headline và nội dung bài viết</small>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Danh mục</label>
+                <select name="categoryId" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var cat in Model.Categories)
+                    {
+                        <option value="@cat.CategoryId" selected="@(Model.CategoryId == cat.CategoryId)">@cat.CategoryName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Thẻ (Tag)</label>
+                <select name="tagId" class="form-select">
+                    <option value="">-- Tất cả --</option>
+                    @foreach (var tag in Model.Tags)
+                    {
+                        <option value="@tag.TagId" selected="@(Model.TagId == tag.TagId)">#@tag.TagName</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Từ ngày</label>
+                <input type="date" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Đến ngày</label>
+                <input type="date" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" class="form-control" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Sắp xếp theo</label>
+                <select name="sortBy" class="form-select">
+                    <option value="date" selected="@(Model.SortBy == "date" || string.IsNullOrEmpty(Model.SortBy))">Mới nhất</option>
+                    <option value="title" selected="@(Model.SortBy == "title")">Tiêu đề (A-Z)</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-fill" onclick="document.getElementById('hdnCurrentPage').value = 1;">
+                    <i class="bi bi-search"></i> Tìm kiếm
+                </button>
+                <a asp-page="/News/Search" class="btn btn-secondary flex-fill">
+                    <i class="bi bi-arrow-clockwise"></i> Làm mới
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="mb-0" id="resultsInfo">
+        <strong>@Model.TotalCount</strong> kết quả 
+        @if (!string.IsNullOrEmpty(Model.Keyword))
+        {
+            <span class="text-muted">cho "@Model.Keyword"</span>
+        }
+        @if (Model.CategoryId.HasValue || Model.TagId.HasValue || Model.StartDate.HasValue || Model.EndDate.HasValue)
+        {
+            <span class="text-muted">(có bộ lọc)</span>
+        }
+    </p>
+    <div>
+        <small class="text-muted" id="sortInfo">
+            Sắp xếp: 
+            <strong>@(Model.SortBy == "title" ? "Theo tiêu đề" : "Mới nhất")</strong>
+        </small>
+    </div>
+</div>
+
+<div id="resultsContainer">
+@if (Model.Articles.Count == 0) 
+{
+    <div class="alert alert-info">
+        Không tìm thấy kết quả phù hợp.
+    </div>
+}
+else
+{
+    <div class="row">
+        @foreach (var article in Model.Articles)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <span class="badge bg-primary mb-2">@article.CategoryName</span>
+                        @if (article.NewsStatus == true)
+                        {
+                            <span class="badge bg-success mb-2">Hoạt động</span>
+                        }
+                        else if (Model.IsAuthenticated)
+                        {
+                            <span class="badge bg-warning text-dark mb-2">Không hoạt động</span>
+                        }
+                        <h5 class="card-title">
+                            <a asp-page="/News/Details" asp-route-id="@article.NewsArticleId" class="text-decoration-none">
+                                @(article.NewsTitle ?? article.Headline)
+                            </a>
+                        </h5>
+                        <p class="card-text text-muted small">@article.Headline</p>
+                        @if (article.Tags != null && article.Tags.Any())
+                        {
+                            <div class="mt-2">
+                                @foreach (var tag in article.Tags)
+                                {
+                                    <span class="badge bg-light text-dark border me-1 mb-1">#@tag.TagName</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <div class="card-footer bg-transparent">
+                        <small class="text-muted">
+                            @article.CreatedByName | @article.CreatedDate?.ToString("dd/MM/yyyy")
+                        </small>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+</div>
+
+<div id="paginationContainer">
+    @if (Model.TotalPages > 1)
+    {
+        <nav aria-label="Phân trang">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                    <a class="page-link" style="cursor: pointer;" onclick="goToPage(@(Model.CurrentPage - 1))">
+                        <i class="bi bi-chevron-left"></i> Trước
+                    </a>
+                </li>
+
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" style="cursor: pointer;" onclick="goToPage(@i)">@i</a>
+                    </li>
+                }
+
+                <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                    <a class="page-link" style="cursor: pointer;" onclick="goToPage(@(Model.CurrentPage + 1))">
+                        Sau <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@section Scripts {
+<script>
+(function() {
+    'use strict';
+    
+    // Toast notification function
+    function showToast(message, isSuccess) {
+        var toast = document.getElementById('notificationToast');
+        var body = document.getElementById('toastMessage');
+        var closeBtn = toast.querySelector('.btn-close');
+        
+        body.textContent = message;
+        toast.classList.remove('text-bg-success', 'text-bg-danger', 'bg-success', 'bg-danger', 'text-white');
+        
+        if (isSuccess) {
+            toast.classList.add('bg-success', 'text-white');
+        } else {
+            toast.classList.add('bg-danger', 'text-white');
+        }
+        
+        closeBtn.classList.add('btn-close-white');
+        
+        var bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 4000 });
+        bsToast.show();
+    }
+    
+    // Date range validation
+    var startDateInput = document.querySelector('input[name="startDate"]');
+    var endDateInput = document.querySelector('input[name="endDate"]');
+    var searchForm = document.querySelector('form');
+    
+    function validateDateRange() {
+        var startDate = startDateInput.value;
+        var endDate = endDateInput.value;
+        
+        if (startDate && endDate) {
+            if (new Date(startDate) > new Date(endDate)) {
+                showToast('Ngày bắt đầu không được sau ngày kết thúc', false);
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // Validate on change
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', validateDateRange);
+        endDateInput.addEventListener('change', validateDateRange);
+        
+        // Validate on form submit
+        if (searchForm) {
+            searchForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                if (!validateDateRange()) {
+                    return false;
+                }
+                document.getElementById('hdnCurrentPage').value = 1;
+                await performAjaxSearch();
+            });
+        }
+    }
+    
+    // Pagination handler exposed to global scope
+    window.goToPage = async function(page) {
+        document.getElementById('hdnCurrentPage').value = page;
+        await performAjaxSearch();
+    };
+
+    async function performAjaxSearch() {
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        const formData = new FormData(searchForm);
+        
+        try {
+            const response = await fetch('?handler=Ajax', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                renderResults(data);
+            } else {
+                showToast('Có lỗi xảy ra khi tìm kiếm', false);
+            }
+        } catch (err) {
+            console.error(err);
+            showToast('Lỗi kết nối cơ sở dữ liệu', false);
+        }
+    }
+
+    function renderResults(data) {
+        // Update results info
+        let infoHtml = `<strong>${data.totalCount}</strong> kết quả`;
+        if (data.keyword) infoHtml += ` <span class="text-muted">cho "${data.keyword}"</span>`;
+        if (data.categoryId || data.tagId || data.startDate || data.endDate) {
+            infoHtml += ` <span class="text-muted">(có bộ lọc)</span>`;
+        }
+        document.getElementById('resultsInfo').innerHTML = infoHtml;
+        
+        // Update sort info
+        const sortByInput = searchForm.querySelector('select[name="sortBy"]').value;
+        document.getElementById('sortInfo').innerHTML = `Sắp xếp: <strong>${sortByInput === 'title' ? 'Theo tiêu đề' : 'Mới nhất'}</strong>`;
+        
+        // Render articles
+        const container = document.getElementById('resultsContainer');
+        if (data.articles.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">Không tìm thấy kết quả phù hợp.</div>';
+            document.getElementById('paginationContainer').innerHTML = '';
+            return;
+        }
+        
+        let html = '<div class="row">';
+        data.articles.forEach(article => {
+            let statusBadge = '';
+            if (article.newsStatus === true) {
+                statusBadge = '<span class="badge bg-success mb-2">Hoạt động</span>';
+            } else if (data.isAuthenticated) {
+                statusBadge = '<span class="badge bg-warning text-dark mb-2">Không hoạt động</span>';
+            }
+            
+            const title = article.newsTitle || article.headline || '';
+            const headline = article.headline || '';
+            const catName = article.categoryName || '';
+            const author = article.createdByName || 'Ẩn danh';
+            
+            let dateStr = '';
+            if (article.createdDate) {
+                const d = new Date(article.createdDate);
+                dateStr = d.toLocaleDateString('en-GB'); // dd/MM/yyyy
+            }
+            
+            let tagsHtml = '';
+            if (article.tags && article.tags.length > 0) {
+                tagsHtml = '<div class="mt-2">';
+                article.tags.forEach(tag => {
+                    tagsHtml += `<span class="badge bg-light text-dark border me-1 mb-1">#${tag.tagName}</span>`;
+                });
+                tagsHtml += '</div>';
+            }
+            
+            html += `
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <span class="badge bg-primary mb-2">${catName}</span>
+                            ${statusBadge}
+                            <h5 class="card-title">
+                                <a href="/News/Details?id=${article.newsArticleId}" class="text-decoration-none">
+                                    ${title}
+                                </a>
+                            </h5>
+                            <p class="card-text text-muted small">${headline}</p>
+                            ${tagsHtml}
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                ${author} | ${dateStr}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+        
+        // Render pagination
+        renderPagination(data);
+    }
+
+    function renderPagination(data) {
+        const pContainer = document.getElementById('paginationContainer');
+        if (data.totalPages <= 1) {
+            pContainer.innerHTML = '';
+            return;
+        }
+        
+        let html = '<nav aria-label="Phân trang"><ul class="pagination justify-content-center">';
+        
+        // Prev
+        html += `
+            <li class="page-item ${data.currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" style="cursor: pointer;" onclick="goToPage(${data.currentPage - 1})">
+                    <i class="bi bi-chevron-left"></i> Trước
+                </a>
+            </li>
+        `;
+        
+        // Pages
+        for (let i = 1; i <= data.totalPages; i++) {
+            html += `
+                <li class="page-item ${i === data.currentPage ? 'active' : ''}">
+                    <a class="page-link" style="cursor: pointer;" onclick="goToPage(${i})">${i}</a>
+                </li>
+            `;
+        }
+        
+        // Next
+        html += `
+            <li class="page-item ${data.currentPage === data.totalPages ? 'disabled' : ''}">
+                <a class="page-link" style="cursor: pointer;" onclick="goToPage(${data.currentPage + 1})">
+                    Sau <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        `;
+        
+        html += '</ul></nav>';
+        pContainer.innerHTML = html;
+    }
+})();
+</script>
+}
