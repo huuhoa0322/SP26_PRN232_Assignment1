@@ -45,54 +45,7 @@
 
 ---
 
-## Architecture Comparison
 
-### Assignment 01 — Monolithic (2 Projects)
-
-```
-┌──────────────────────┐       ┌──────────────────────┐
-│  Frontend            │       │  Backend API          │
-│  (Razor Pages)       │──────▶│  (Web API)            │
-│  _A01_FE             │ HTTP  │  _A01_BE              │
-└──────────────────────┘       └──────────┬───────────┘
-                                          │ EF Core
-                                          ▼
-                               ┌──────────────────────┐
-                               │    SQL Server         │
-                               │    FUNewsManagement   │
-                               └──────────────────────┘
-```
-
-### Assignment 02 — Distributed (10 Projects)
-
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                        Frontend (Razor Pages)                     │
-│  ┌──────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
-│  │  Pages/  │  │    Services/     │  │     Workers/           │  │
-│  │  Admin/  │  │  CoreApiService  │  │  DataRefreshWorker     │  │
-│  │  Staff/  │  │  AnalyticsApi..  │  │  (HostedService,       │  │
-│  │  Auth/   │  │  LocalCacheSvc   │  │   refreshes every 6h) │  │
-│  │  News/   │  │                  │  │                        │  │
-│  └──────────┘  └──────────────────┘  └────────────────────────┘  │
-│       │                │                        │                 │
-└───────┼────────────────┼────────────────────────┼─────────────────┘
-        │  HttpClient    │  HttpClient            │  HttpClient
-        ▼                ▼                        ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐
-│  Core API    │  │ Analytics API│  │         AI API           │
-│  :5042       │  │  :5002       │  │         :5003            │
-│  (3-Layer)   │  │  (3-Layer)   │  │  Tag Suggestion Service  │
-│  JWT + OData │  │  JWT + OData │  │  Learning Cache Service  │
-│  SignalR Hub │  │  Excel Export│  │  Gemini API Integration  │
-└──────────────┘  └──────────────┘  └──────────────────────────┘
-        │                │
-        ▼                ▼
-   ┌──────────────────────────┐
-   │    SQL Server Database   │
-   │    FUNewsManagement      │
-   └──────────────────────────┘
-```
 
 ---
 
@@ -165,9 +118,9 @@ HE186716_DoHuuHoa_A01/
 ## Installation Guide
 
 ### 1. System Requirements
-- Visual Studio 2022+
+- Visual Studio 2026
 - .NET 8.0 SDK
-- SQL Server 2019+
+- SQL Server 2025
 
 ### 2. Database Setup
 ```sql
@@ -198,9 +151,9 @@ cd HE186716_DoHuuHoa_SE1884-NET_A01_FE && dotnet run
 
 **Assignment 02** (4 projects — use Multiple Startup Projects):
 ```bash
-cd FUNewsManagement_v2_CoreAPI && dotnet run       # :5042
-cd FUNewsManagement_v2_AnalyticsAPI && dotnet run   # :5002
-cd FUNewsManagement_v2_AIAPI && dotnet run          # :5003
+cd FUNewsManagement_v2_CoreAPI && dotnet run       # :xxxx
+cd FUNewsManagement_v2_AnalyticsAPI && dotnet run   # :xxxx
+cd FUNewsManagement_v2_AIAPI && dotnet run          # :xxxx
 cd FUNewsManagement_v2_FE && dotnet run             # Frontend
 ```
 
@@ -235,7 +188,7 @@ cd FUNewsManagement_v2_FE && dotnet run             # Frontend
 | GET | `/api/report/statistics` | Get statistics |
 | GET | `/api/report/export` | Export CSV |
 
-### Assignment 02 — Core API (`:5042`)
+### Assignment 02 — Core API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -269,7 +222,7 @@ cd FUNewsManagement_v2_FE && dotnet run             # Frontend
 | PUT | `/api/profile` | Update profile |
 | — | `/hubs/notifications` | SignalR Hub |
 
-### Assignment 02 — Analytics API (`:5002`)
+### Assignment 02 — Analytics API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -277,7 +230,7 @@ cd FUNewsManagement_v2_FE && dotnet run             # Frontend
 | GET | `/api/analytics/trending` | Trending articles |
 | GET | `/api/analytics/export` | Export Excel (`?startDate=&endDate=`) |
 
-### Assignment 02 — AI API (`:5003`)
+### Assignment 02 — AI API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
