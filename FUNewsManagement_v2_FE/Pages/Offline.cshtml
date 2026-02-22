@@ -1,0 +1,24 @@
+@page
+@model FUNewsManagement_v2_FE.Pages.OfflineModel
+@{
+    ViewData["Title"] = "Lỗi kết nối máy chủ";
+}
+
+<div class="container mt-5 text-center">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h1 class="display-1 text-warning mb-4"><i class="bi bi-wifi-off"></i></h1>
+            <h2 class="mb-3">Không thể kết nối đến máy chủ</h2>
+            <p class="lead text-muted">
+                Hệ thống hiện không thể kết nối đến máy chủ API (Core API).
+            </p>
+            <p>
+                Thao tác bạn vừa yêu cầu gọi dữ liệu trực tiếp nhưng máy chủ đang từ chối kết nối hoặc bị tắt. Vui lòng kiểm tra lại trạng thái Backend hoặc thử lại sau.
+            </p>
+            <div class="mt-4">
+                <a href="/" class="btn btn-primary"><i class="bi bi-house-door"></i> Quay lại Trang chủ</a>
+                <button onclick="window.history.back()" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left"></i> Trở lại trang trước</button>
+            </div>
+        </div>
+    </div>
+</div>

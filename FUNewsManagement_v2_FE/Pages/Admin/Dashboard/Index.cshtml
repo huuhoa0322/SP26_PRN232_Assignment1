@@ -259,7 +259,16 @@
         try {
             const resp = await fetch(url);
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            const data = await resp.json();
+            const root = await resp.json();
+            const data = root.value || root;
+
+            if (root.isOffline) {
+                const banner = document.getElementById('offlineBanner');
+                if (banner) banner.style.display = 'block';
+            } else {
+                const banner = document.getElementById('offlineBanner');
+                if (banner) banner.style.display = 'none';
+            }
 
             renderStatCards(data);
             renderStatusTable(data);
@@ -435,7 +444,14 @@
             // Load nhiều hơn để phân trang có ý nghĩa (200 bản ghi)
             const resp = await fetch('/api/dashboard/trending?top=200');
             if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-            trendingData = await resp.json();
+            const root = await resp.json();
+            trendingData = root.value || root;
+            
+            if (root.isOffline) {
+                const banner = document.getElementById('offlineBanner');
+                if (banner) banner.style.display = 'block';
+            }
+
             renderTrendingPage();
         } catch(e) {
             document.getElementById('trendingBody').innerHTML =

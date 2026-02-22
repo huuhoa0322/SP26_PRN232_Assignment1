@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>Quản lý Tags</h2>
-    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tagModal" onclick="openCreateModal()">
+    <button type="button" id="btnAddTag" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tagModal" onclick="openCreateModal()">
         <i class="bi bi-plus-circle"></i> Thêm Tag
     </button>
 </div>
@@ -141,7 +141,21 @@
             const data = await response.json();
 
             if (data && data.value) {
-                renderTagsTable(data.value);
+                if (data.isOffline) {
+                    const banner = document.getElementById('offlineBanner');
+                    if (banner) banner.style.display = 'block';
+                    
+                    const btnAdd = document.getElementById('btnAddTag');
+                    if (btnAdd) btnAdd.style.display = 'none';
+                } else {
+                    const banner = document.getElementById('offlineBanner');
+                    if (banner) banner.style.display = 'none';
+                    
+                    const btnAdd = document.getElementById('btnAddTag');
+                    if (btnAdd) btnAdd.style.display = 'inline-block';
+                }
+
+                renderTagsTable(data.value, data.isOffline);
                 renderPagination(data.count || data.value.length);
             }
         } catch (error) {
@@ -150,7 +164,7 @@
         }
     }
 
-    function renderTagsTable(tags) {
+    function renderTagsTable(tags, isOffline = false) {
         const tbody = document.getElementById('tagsTableBody');
         if (tags.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">Không có dữ liệu</td></tr>';
@@ -168,12 +182,15 @@
                         : '<span class="text-muted">0 bài viết</span>'}
                 </td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(tag)})'>
-                        <i class="bi bi-pencil"></i> Sửa
-                    </button>
-                    <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal(${tag.tagId}, ${JSON.stringify(tag.tagName || "")})'>
-                        <i class="bi bi-trash"></i> Xóa
-                    </button>
+                    ${isOffline 
+                        ? '<span class="text-muted"><i class="bi bi-slash-circle"></i> Vô hiệu hóa</span>'
+                        : `<button type="button" class="btn btn-sm btn-warning" onclick='openEditModal(${JSON.stringify(tag)})'>
+                            <i class="bi bi-pencil"></i> Sửa
+                           </button>
+                           <button type="button" class="btn btn-sm btn-danger" onclick='openDeleteModal(${tag.tagId}, ${JSON.stringify(tag.tagName || "")})'>
+                            <i class="bi bi-trash"></i> Xóa
+                           </button>`
+                    }
                 </td>
             </tr>
         `).join('');

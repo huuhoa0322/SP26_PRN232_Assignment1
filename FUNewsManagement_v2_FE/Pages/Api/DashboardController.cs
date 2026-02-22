@@ -40,7 +40,9 @@ namespace FUNewsManagement_v2_FE.Pages.Api
         {
             var items = await _analyticsService.GetDashboardAsync(filter);
             if (items == null) return StatusCode(502, new { message = "Analytics API không phản hồi" });
-            return Ok(items);
+            
+            bool isOffline = HttpContext.Items.ContainsKey("IsOfflineMode") && (bool)HttpContext.Items["IsOfflineMode"];
+            return isOffline ? Ok(new { value = items, isOffline = true }) : Ok(items);
         }
 
         /// <summary>
@@ -51,7 +53,9 @@ namespace FUNewsManagement_v2_FE.Pages.Api
         {
             var items = await _analyticsService.GetTrendingAsync(top);
             if (items == null) return StatusCode(502, new { message = "Analytics API không phản hồi" });
-            return Ok(items);
+            
+            bool isOffline = HttpContext.Items.ContainsKey("IsOfflineMode") && (bool)HttpContext.Items["IsOfflineMode"];
+            return isOffline ? Ok(new { value = items, isOffline = true }) : Ok(items);
         }
 
         /// <summary>

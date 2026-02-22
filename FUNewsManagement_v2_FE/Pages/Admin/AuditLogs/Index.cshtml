@@ -165,6 +165,14 @@
             const data = await response.json();
             
             if (data && data.value) {
+                if (data.isOffline) {
+                    const banner = document.getElementById('offlineBanner');
+                    if (banner) banner.style.display = 'block';
+                } else {
+                    const banner = document.getElementById('offlineBanner');
+                    if (banner) banner.style.display = 'none';
+                }
+
                 renderLogsTable(data.value);
                 renderPagination(data.count || data.value.length);
             }

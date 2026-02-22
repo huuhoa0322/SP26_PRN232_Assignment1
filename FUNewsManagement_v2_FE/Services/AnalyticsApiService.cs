@@ -11,15 +11,17 @@ namespace FUNewsManagement_v2_FE.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly LocalCacheService _localCache;
         private readonly JsonSerializerOptions _jsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
         };
 
-        public AnalyticsApiService(HttpClient httpClient, IHttpContextAccessor contextAccessor)
+        public AnalyticsApiService(HttpClient httpClient, IHttpContextAccessor contextAccessor, LocalCacheService localCache)
         {
             _httpClient = httpClient;
             _contextAccessor = contextAccessor;
+            _localCache = localCache;
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────
@@ -54,7 +56,21 @@ namespace FUNewsManagement_v2_FE.Services
             if (!string.IsNullOrEmpty(odataFilter))
                 url += $"?$filter={Uri.EscapeDataString(odataFilter)}";
 
-            return await GetAsync<List<DashboardItemDto>>(url);
+            var result = await GetAsync<List<DashboardItemDto>>(url);
+            
+            if (result != null)
+            {
+                if (string.IsNullOrEmpty(odataFilter))
+                {
+                    await _localCache.SaveDataAsync("analytics_dashboard_cache", result);
+                }
+                return result;
+            }
+
+            if (_contextAccessor.HttpContext != null)
+                _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                
+            return await _localCache.GetDataAsync<List<DashboardItemDto>>("analytics_dashboard_cache");
         }
 
         // ── Trending ──────────────────────────────────────────────────────────
@@ -62,8 +78,22 @@ namespace FUNewsManagement_v2_FE.Services
         /// <summary>GET /api/analytics/trending?$top=N</summary>
         public async Task<List<TrendingArticleDto>?> GetTrendingAsync(int top = 10)
         {
-            return await GetAsync<List<TrendingArticleDto>>(
+            var result = await GetAsync<List<TrendingArticleDto>>(
                 $"/api/analytics/trending?$top={top}&$orderby=TagCount desc,CreatedDate desc");
+                
+            if (result != null)
+            {
+                if (top == 10) // Cache standard top 10
+                {
+                    await _localCache.SaveDataAsync("analytics_trending_cache", result);
+                }
+                return result;
+            }
+
+            if (_contextAccessor.HttpContext != null)
+                _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                
+            return await _localCache.GetDataAsync<List<TrendingArticleDto>>("analytics_trending_cache");
         }
 
         // ── Export ────────────────────────────────────────────────────────────

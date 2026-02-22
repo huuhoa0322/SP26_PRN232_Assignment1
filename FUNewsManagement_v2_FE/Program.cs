@@ -36,7 +36,37 @@ namespace FUNewsManagement_v2_FE
                 client.BaseAddress = new Uri(analyticsApiBaseUrl);
             });
 
+            // Add Cache Service and Background Worker for Offline Mode
+            builder.Services.AddSingleton<FUNewsManagement_v2_FE.Services.LocalCacheService>();
+            builder.Services.AddHostedService<FUNewsManagement_v2_FE.Workers.DataRefreshWorker>();
+
             var app = builder.Build();
+
+            // Custom Middleware for Offline Fallback 
+            app.Use(async (context, next) =>
+            {
+                try
+                {
+                    await next();
+                }
+                catch (HttpRequestException ex)
+                {
+                    // If the backend refuses connection or times out, redirect to Offline page.
+                    // Make sure it's not an API route or an ajax request first, otherwise it should return JSON
+                    if (context.Request.Path.StartsWithSegments("/api") || context.Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                    {
+                        context.Response.StatusCode = 503;
+                        await context.Response.WriteAsync("Service Unavailable - Offline Mode");
+                    }
+                    else
+                    {
+                        if (!context.Response.HasStarted)
+                        {
+                            context.Response.Redirect("/Offline");
+                        }
+                    }
+                }
+            });
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

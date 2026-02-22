@@ -36,7 +36,9 @@ namespace FUNewsManagement_v2_FE.Pages.Api
                 if (result == null)
                     return StatusCode(500, "Failed to fetch tags");
 
-                return Ok(new { value = result.Value, count = result.Count });
+                bool isOffline = HttpContext.Items.ContainsKey("IsOfflineMode") && (bool)HttpContext.Items["IsOfflineMode"];
+
+                return Ok(new { value = result.Value, count = result.Count, isOffline = isOffline });
             }
             catch (Exception ex)
             {

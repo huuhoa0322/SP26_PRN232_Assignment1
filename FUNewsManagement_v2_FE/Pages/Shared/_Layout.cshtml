@@ -83,6 +83,15 @@
 
     <div class="container">
         <main role="main" class="pb-3">
+            <!-- Offline Banner -->
+            @{
+                var isOfflineMode = Context.Items.ContainsKey("IsOfflineMode") && (bool)Context.Items["IsOfflineMode"];
+                var displayStyle = isOfflineMode ? "block" : "none";
+            }
+            <div id="offlineBanner" class="alert alert-warning text-center fw-bold sticky-top z-3" role="alert" style="display: @displayStyle;">
+                <i class="bi bi-wifi-off me-2"></i> ⚠️ Offline Mode: Bạn đang xem dữ liệu offline. Kết nối đến máy chủ bị gián đoạn. Các chức năng tạm thời bị vô hiệu hóa.
+            </div>
+
             <!-- Toast Container -->
             <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
 

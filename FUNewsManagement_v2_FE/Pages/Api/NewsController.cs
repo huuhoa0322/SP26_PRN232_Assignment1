@@ -40,8 +40,10 @@ namespace FUNewsManagement_v2_FE.Pages.Api
                     return StatusCode(500, "Failed to fetch news articles");
                 }
 
+                bool isOffline = HttpContext.Items.ContainsKey("IsOfflineMode") && (bool)HttpContext.Items["IsOfflineMode"];
+
                 _logger.LogInformation($"Returning {result.Value?.Count ?? 0} news articles, total count: {result.Count}");
-                return Ok(new { value = result.Value, count = result.Count });
+                return Ok(new { value = result.Value, count = result.Count, isOffline = isOffline });
             }
             catch (Exception ex)
             {

@@ -19,11 +19,13 @@ namespace FUNewsManagement_v2_FE.Services
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _contextAccessor;
         private readonly HttpClient _aiHttpClient;
+        private readonly LocalCacheService _localCache;
 
-        public CoreApiService(HttpClient httpClient, IHttpContextAccessor contextAccessor, IConfiguration configuration)
+        public CoreApiService(HttpClient httpClient, IHttpContextAccessor contextAccessor, IConfiguration configuration, LocalCacheService localCache)
         {
             _httpClient = httpClient;
             _contextAccessor = contextAccessor;
+            _localCache = localCache;
             
             _aiHttpClient = new HttpClient();
             _aiHttpClient.BaseAddress = new Uri(configuration["AiApiSettings:BaseUrl"] ?? "http://localhost:5072");
@@ -77,11 +79,23 @@ namespace FUNewsManagement_v2_FE.Services
                 }
 
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return await response.Content.ReadFromJsonAsync<ODataResponse<AccountDto>>(options);
+                var responseData = await response.Content.ReadFromJsonAsync<ODataResponse<AccountDto>>(options);
+                
+                if (responseData != null)
+                {
+                    await _localCache.SaveDataAsync("accounts_cache", responseData);
+                }
+                
+                return responseData;
             }
             catch
             {
-                return null;
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                var cachedParams = await _localCache.GetDataAsync<ODataResponse<AccountDto>>("accounts_cache");
+                return cachedParams;
             }
         }
 
@@ -141,24 +155,43 @@ namespace FUNewsManagement_v2_FE.Services
         /// </summary>
         public async Task<ODataResponse<AuditLogDto>?> GetAuditLogsAsync(string? filter = null, int? top = 20, int? skip = null, string? orderby = null)
         {
-            AddAuthorizationHeader();
-            
-            var queryParams = new List<string> { "$count=true" };
-            if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
-            else queryParams.Add("$orderby=Timestamp desc");
-            
-            if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
-            if (top.HasValue) queryParams.Add($"$top={top}");
-            if (skip.HasValue) queryParams.Add($"$skip={skip}");
+            try
+            {
+                AddAuthorizationHeader();
+                
+                var queryParams = new List<string> { "$count=true" };
+                if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
+                else queryParams.Add("$orderby=Timestamp desc");
+                
+                if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
+                if (top.HasValue) queryParams.Add($"$top={top}");
+                if (skip.HasValue) queryParams.Add($"$skip={skip}");
 
-            var query = "?" + string.Join("&", queryParams);
-            var response = await _httpClient.GetAsync($"/odata/AuditLogs{query}");
-            
-            if (!response.IsSuccessStatusCode)
-                return null;
+                var query = "?" + string.Join("&", queryParams);
+                var response = await _httpClient.GetAsync($"/odata/AuditLogs{query}");
+                
+                if (!response.IsSuccessStatusCode)
+                    return null;
 
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            return await response.Content.ReadFromJsonAsync<ODataResponse<AuditLogDto>>(options);
+                var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var responseData = await response.Content.ReadFromJsonAsync<ODataResponse<AuditLogDto>>(options);
+                
+                if (responseData != null)
+                {
+                    await _localCache.SaveDataAsync("auditlogs_cache", responseData);
+                }
+                
+                return responseData;
+            }
+            catch
+            {
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                var cachedLogs = await _localCache.GetDataAsync<ODataResponse<AuditLogDto>>("auditlogs_cache");
+                return cachedLogs;
+            }
         }
 
         /// <summary>
@@ -166,13 +199,32 @@ namespace FUNewsManagement_v2_FE.Services
         /// </summary>
         public async Task<DashboardStatsDto?> GetDashboardStatsAsync()
         {
-            AddAuthorizationHeader();
-            var response = await _httpClient.GetAsync("/api/dashboard/stats");
-            
-            if (!response.IsSuccessStatusCode)
-                return null;
+            try
+            {
+                AddAuthorizationHeader();
+                var response = await _httpClient.GetAsync("/api/dashboard/stats");
+                
+                if (!response.IsSuccessStatusCode)
+                    return null;
 
-            return await response.Content.ReadFromJsonAsync<DashboardStatsDto>();
+                var responseData = await response.Content.ReadFromJsonAsync<DashboardStatsDto>();
+                
+                if (responseData != null)
+                {
+                    await _localCache.SaveDataAsync("dashboard_cache", responseData);
+                }
+                
+                return responseData;
+            }
+            catch
+            {
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                var cachedStats = await _localCache.GetDataAsync<DashboardStatsDto>("dashboard_cache");
+                return cachedStats;
+            }
         }
 
         /// <summary>
@@ -212,15 +264,37 @@ namespace FUNewsManagement_v2_FE.Services
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
                 return await response.Content.ReadFromJsonAsync<ODataResponse<CategoryDto>>(options);
             }
-            catch { return null; }
+            catch 
+            {
+                // Fallback to JSON cache for Offline Mode
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                
+                var cachedParams = await _localCache.GetDataAsync<ODataResponse<CategoryDto>>("categories_cache");
+                return cachedParams;
+            }
         }
 
         public async Task<CategoryDto?> GetCategoryByIdAsync(short id)
         {
-            AddAuthorizationHeader();
-            var response = await _httpClient.GetAsync($"/api/categories/{id}");
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<CategoryDto>();
+            try
+            {
+                AddAuthorizationHeader();
+                var response = await _httpClient.GetAsync($"/api/categories/{id}");
+                if (!response.IsSuccessStatusCode) return null;
+                return await response.Content.ReadFromJsonAsync<CategoryDto>();
+            }
+            catch
+            {
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                var cachedParams = await _localCache.GetDataAsync<ODataResponse<CategoryDto>>("categories_cache");
+                return cachedParams?.Value?.FirstOrDefault(c => c.CategoryId == id);
+            }
         }
 
         public async Task<CategoryDto?> CreateCategoryAsync(CreateCategoryRequest request)
@@ -287,9 +361,24 @@ namespace FUNewsManagement_v2_FE.Services
                 var response = await _httpClient.GetAsync(url);
                 if (!response.IsSuccessStatusCode) return null;
                 var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-                return await response.Content.ReadFromJsonAsync<ODataResponse<TagDto>>(options);
+                var responseData = await response.Content.ReadFromJsonAsync<ODataResponse<TagDto>>(options);
+                
+                if (responseData != null)
+                {
+                    await _localCache.SaveDataAsync("tags_cache", responseData);
+                }
+                
+                return responseData;
             }
-            catch { return null; }
+            catch
+            {
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                var cachedTags = await _localCache.GetDataAsync<ODataResponse<TagDto>>("tags_cache");
+                return cachedTags;
+            }
         }
 
         public async Task<TagDto?> GetTagByIdAsync(int id)
@@ -378,17 +467,36 @@ namespace FUNewsManagement_v2_FE.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Exception in GetNewsArticlesAsync: {ex.Message}");
-                Console.WriteLine($"StackTrace: {ex.StackTrace}");
-                return null;
+                
+                // Fallback to Offline Mode JSON Cache
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                
+                var cachedNews = await _localCache.GetDataAsync<ODataResponse<NewsArticleDto>>("news_cache");
+                return cachedNews;
             }
         }
 
         public async Task<NewsArticleDto?> GetNewsArticleByIdAsync(string id)
         {
-            AddAuthorizationHeader();
-            var response = await _httpClient.GetAsync($"/api/news/{id}");
-            if (!response.IsSuccessStatusCode) return null;
-            return await response.Content.ReadFromJsonAsync<NewsArticleDto>();
+            try
+            {
+                AddAuthorizationHeader();
+                var response = await _httpClient.GetAsync($"/api/news/{id}");
+                if (!response.IsSuccessStatusCode) return null;
+                return await response.Content.ReadFromJsonAsync<NewsArticleDto>();
+            }
+            catch (Exception)
+            {
+                if (_contextAccessor.HttpContext != null)
+                {
+                    _contextAccessor.HttpContext.Items["IsOfflineMode"] = true;
+                }
+                var cachedNews = await _localCache.GetDataAsync<ODataResponse<NewsArticleDto>>("news_cache");
+                return cachedNews?.Value?.FirstOrDefault(n => n.NewsArticleId == id);
+            }
         }
 
         public async Task<NewsArticleDto?> CreateNewsArticleAsync(CreateNewsArticleRequest request, Stream? imageStream, string? imageName)
