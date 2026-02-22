@@ -23,6 +23,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services.Interfaces
         Task CreateAsync(short? userId, string action, string entity, string? beforeData, string? afterData);
 
         /// <summary>
+        /// Ghi log tự động từ Service layer, serialize object thành JSON
+        /// </summary>
+        Task LogActionAsync(string action, string entityType, string? entityId, object? oldData, object? newData);
+
+        /// <summary>
         /// Filter audit logs
         /// </summary>
         Task<IEnumerable<AuditLogDto>> FilterAsync(short? userId, string? entity, DateTime? fromDate, DateTime? toDate);

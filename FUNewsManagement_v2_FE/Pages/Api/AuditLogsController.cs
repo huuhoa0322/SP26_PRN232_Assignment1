@@ -18,7 +18,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
         [HttpGet]
         public async Task<IActionResult> GetAuditLogs([FromQuery] string? filter, [FromQuery] int? top, [FromQuery] int? skip, [FromQuery] string? orderby)
         {
-            var result = await _apiService.GetAuditLogsAsync(filter, top);
+            var result = await _apiService.GetAuditLogsAsync(filter, top, skip, orderby);
             if (result == null)
                 return StatusCode(500);
 

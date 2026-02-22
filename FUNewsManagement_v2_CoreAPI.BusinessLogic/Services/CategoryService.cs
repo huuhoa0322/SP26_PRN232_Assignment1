@@ -10,11 +10,13 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
     {
         private readonly ICategoryRepository _categoryRepository;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public CategoryService(ICategoryRepository categoryRepository, IMapper mapper)
+        public CategoryService(ICategoryRepository categoryRepository, IMapper mapper, IAuditLogService auditLogService)
         {
             _categoryRepository = categoryRepository;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<CategoryDto>> GetAllAsync()
@@ -46,13 +48,19 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
 
             var category = _mapper.Map<Category>(request);
             await _categoryRepository.AddAsync(category);
-            return _mapper.Map<CategoryDto>(category);
+            var resultDto = _mapper.Map<CategoryDto>(category);
+            
+            await _auditLogService.LogActionAsync("Create", "Category", category.CategoryId.ToString(), null, resultDto);
+            
+            return resultDto;
         }
 
         public async Task<CategoryDto?> UpdateAsync(short id, UpdateCategoryRequest request)
         {
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null) return null;
+
+            var oldData = _mapper.Map<CategoryDto>(category);
 
             // Check if ParentCategoryId changes and if it's used by articles
             if (request.ParentCategoryId.HasValue && request.ParentCategoryId != category.ParentCategoryId)
@@ -80,7 +88,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             
             _mapper.Map(request, category);
             await _categoryRepository.UpdateAsync(category);
-            return _mapper.Map<CategoryDto>(category);
+            var newData = _mapper.Map<CategoryDto>(category);
+
+            await _auditLogService.LogActionAsync("Update", "Category", id.ToString(), oldData, newData);
+
+            return newData;
         }
 
         public async Task<bool> DeleteAsync(short id)
@@ -93,7 +105,12 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
 
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null) return false;
+            
+            var oldData = _mapper.Map<CategoryDto>(category);
             await _categoryRepository.DeleteAsync(category);
+            
+            await _auditLogService.LogActionAsync("Delete", "Category", id.ToString(), oldData, null);
+
             return true;
         }
 
@@ -102,8 +119,14 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             var category = await _categoryRepository.GetByIdAsync(id);
             if (category == null) return false;
 
+            var oldData = _mapper.Map<CategoryDto>(category);
+
             category.IsActive = !category.IsActive; // Toggle
             await _categoryRepository.UpdateAsync(category);
+            
+            var newData = _mapper.Map<CategoryDto>(category);
+            await _auditLogService.LogActionAsync("Update (Toggle Status)", "Category", id.ToString(), oldData, newData);
+
             return true;
         }
     }

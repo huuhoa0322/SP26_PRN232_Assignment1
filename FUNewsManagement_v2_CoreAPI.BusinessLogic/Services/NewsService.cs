@@ -16,19 +16,22 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
+        private readonly IAuditLogService _auditLogService;
 
         public NewsService(
             INewsArticleRepository newsRepository, 
             ITagRepository tagRepository,
             IMapper mapper,
             IWebHostEnvironment environment,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IAuditLogService auditLogService)
         {
             _newsRepository = newsRepository;
             _tagRepository = tagRepository;
             _mapper = mapper;
             _environment = environment;
             _configuration = configuration;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<NewsArticleDto>> GetAllAsync()
@@ -104,13 +107,19 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             }
 
             await _newsRepository.AddAsync(article);
-            return _mapper.Map<NewsArticleDto>(article);
+            var resultDto = _mapper.Map<NewsArticleDto>(article);
+
+            await _auditLogService.LogActionAsync("Create", "NewsArticle", article.NewsArticleId, null, resultDto);
+
+            return resultDto;
         }
 
         public async Task<NewsArticleDto?> UpdateAsync(string id, UpdateNewsArticleRequest request, short userId)
         {
             var article = await _newsRepository.GetByIdWithDetailsAsync(id);
             if (article == null) return null;
+
+            var oldData = _mapper.Map<NewsArticleDto>(article);
 
             _mapper.Map(request, article);
             article.UpdatedById = userId;
@@ -138,7 +147,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             }
 
             await _newsRepository.UpdateAsync(article);
-            return _mapper.Map<NewsArticleDto>(article);
+            var newData = _mapper.Map<NewsArticleDto>(article);
+
+            await _auditLogService.LogActionAsync("Update", "NewsArticle", id, oldData, newData);
+
+            return newData;
         }
 
         public async Task<bool> DeleteAsync(string id, short userId)
@@ -150,11 +163,16 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             if (article.CreatedById != userId)
                 throw new UnauthorizedAccessException("Bạn chỉ có thể xóa bài viết do chính mình tạo");
 
+            var oldData = _mapper.Map<NewsArticleDto>(article);
+
             // Clear Tags to avoid FK constraint on NewsTag table
             article.Tags.Clear();
             await _newsRepository.UpdateAsync(article);
 
             await _newsRepository.DeleteAsync(article);
+            
+            await _auditLogService.LogActionAsync("Delete", "NewsArticle", id, oldData, null);
+
             return true;
         }
 
@@ -181,7 +199,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             };
 
             await _newsRepository.AddAsync(copy);
-            return _mapper.Map<NewsArticleDto>(copy);
+            var resultDto = _mapper.Map<NewsArticleDto>(copy);
+            
+            await _auditLogService.LogActionAsync("Create (Duplicate)", "NewsArticle", copy.NewsArticleId, null, resultDto);
+
+            return resultDto;
         }
 
         public async Task<IEnumerable<NewsArticleDto>> GetRecommendAsync(string articleId, int count = 3)

@@ -135,13 +135,17 @@ namespace FUNewsManagement_v2_FE.Services
         /// <summary>
         /// Get audit logs
         /// </summary>
-        public async Task<ODataResponse<AuditLogDto>?> GetAuditLogsAsync(string? filter = null, int? top = 20)
+        public async Task<ODataResponse<AuditLogDto>?> GetAuditLogsAsync(string? filter = null, int? top = 20, int? skip = null, string? orderby = null)
         {
             AddAuthorizationHeader();
             
-            var queryParams = new List<string> { "$orderby=Timestamp desc", "$count=true" };
+            var queryParams = new List<string> { "$count=true" };
+            if (!string.IsNullOrEmpty(orderby)) queryParams.Add($"$orderby={orderby}");
+            else queryParams.Add("$orderby=Timestamp desc");
+            
             if (!string.IsNullOrEmpty(filter)) queryParams.Add($"$filter={filter}");
             if (top.HasValue) queryParams.Add($"$top={top}");
+            if (skip.HasValue) queryParams.Add($"$skip={skip}");
 
             var query = "?" + string.Join("&", queryParams);
             var response = await _httpClient.GetAsync($"/odata/AuditLogs{query}");

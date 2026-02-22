@@ -41,6 +41,7 @@ namespace FUNewsManagement_v2_CoreAPI
             builder.Services.AddScoped<INewsArticleRepository, NewsArticleRepository>();
 
             // Register Services
+            builder.Services.AddHttpContextAccessor();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();

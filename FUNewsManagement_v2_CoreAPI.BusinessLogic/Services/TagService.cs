@@ -10,11 +10,13 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
     {
         private readonly ITagRepository _tagRepository;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public TagService(ITagRepository tagRepository, IMapper mapper)
+        public TagService(ITagRepository tagRepository, IMapper mapper, IAuditLogService auditLogService)
         {
             _tagRepository = tagRepository;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<TagDto>> GetAllAsync()
@@ -46,13 +48,19 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             tag.TagId = newId;
 
             await _tagRepository.AddAsync(tag);
-            return _mapper.Map<TagDto>(tag);
+            var resultDto = _mapper.Map<TagDto>(tag);
+
+            await _auditLogService.LogActionAsync("Create", "Tag", tag.TagId.ToString(), null, resultDto);
+
+            return resultDto;
         }
 
         public async Task<TagDto?> UpdateAsync(int id, UpdateTagRequest request)
         {
             var tag = await _tagRepository.GetByIdAsync(id);
             if (tag == null) return null;
+
+            var oldData = _mapper.Map<TagDto>(tag);
 
             // Check duplicate name if changed
             if (!string.IsNullOrEmpty(request.TagName) && request.TagName != tag.TagName)
@@ -66,7 +74,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
 
             _mapper.Map(request, tag);
             await _tagRepository.UpdateAsync(tag);
-            return _mapper.Map<TagDto>(tag);
+            var newData = _mapper.Map<TagDto>(tag);
+
+            await _auditLogService.LogActionAsync("Update", "Tag", id.ToString(), oldData, newData);
+
+            return newData;
         }
 
         public async Task<bool> DeleteAsync(int id)
@@ -79,7 +91,12 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
 
             var tag = await _tagRepository.GetByIdAsync(id);
             if (tag == null) return false;
+            
+            var oldData = _mapper.Map<TagDto>(tag);
             await _tagRepository.DeleteAsync(tag);
+            
+            await _auditLogService.LogActionAsync("Delete", "Tag", id.ToString(), oldData, null);
+
             return true;
         }
     }

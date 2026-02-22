@@ -13,11 +13,13 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
     {
         private readonly IAccountRepository _accountRepo;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
 
-        public AccountService(IAccountRepository accountRepo, IMapper mapper) 
+        public AccountService(IAccountRepository accountRepo, IMapper mapper, IAuditLogService auditLogService) 
         {
             _accountRepo = accountRepo;
             _mapper = mapper;
+            _auditLogService = auditLogService;
         }
 
         public async Task<IEnumerable<AccountDto>> GetAllAsync()
@@ -57,7 +59,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             };
 
             var created = await _accountRepo.AddAsync(account);
-            return _mapper.Map<AccountDto>(created);
+            var resultDto = _mapper.Map<AccountDto>(created);
+            
+            await _auditLogService.LogActionAsync("Create", "SystemAccount", newId.ToString(), null, resultDto);
+            
+            return resultDto;
         }
 
         public async Task<AccountDto?> UpdateAsync(short id, UpdateAccountRequest request)
@@ -67,6 +73,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             {
                 return null;
             }
+
+            var oldData = _mapper.Map<AccountDto>(account);
 
             // Update name nếu có
             if (!string.IsNullOrEmpty(request.AccountName))
@@ -106,7 +114,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             }
 
             await _accountRepo.UpdateAsync(account);
-            return _mapper.Map<AccountDto>(account);
+            var newData = _mapper.Map<AccountDto>(account);
+
+            await _auditLogService.LogActionAsync("Update", "SystemAccount", id.ToString(), oldData, newData);
+
+            return newData;
         }
 
         public async Task<bool> DeleteAsync(short id)
@@ -123,7 +135,10 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
                 throw new InvalidOperationException("Tài khoản này đã tạo bài viết, không thể xóa.");
             }
 
+            var oldData = _mapper.Map<AccountDto>(account);
             await _accountRepo.DeleteAsync(account);
+            await _auditLogService.LogActionAsync("Delete", "SystemAccount", id.ToString(), oldData, null);
+
             return true;
         }
 
