@@ -130,9 +130,8 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label">Tags</label>
-                        <select id="newsTags" class="form-select" multiple size="3">
-                        </select>
-                        <small class="text-muted">Giữ Ctrl để chọn nhiều tags</small>
+                        <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;" id="newsTagsContainer">
+                        </div>
                     </div>
                 </div>
                 
@@ -298,12 +297,27 @@
     }
 
     function updateTagsDropdown() {
-        const select = document.getElementById('newsTags');
-        select.innerHTML = '';
+        const container = document.getElementById('newsTagsContainer');
+        container.innerHTML = '';
         
         tags.forEach(tag => {
-            const option = new Option(tag.tagName, tag.tagId);
-            select.add(option);
+            const wrapper = document.createElement('div');
+            wrapper.className = 'form-check form-check-inline mb-2';
+            const checkbox = document.createElement('input');
+            checkbox.className = 'form-check-input tag-checkbox';
+            checkbox.type = 'checkbox';
+            checkbox.id = 'tag_' + tag.tagId;
+            checkbox.value = tag.tagId;
+            checkbox.dataset.tagName = tag.tagName;
+            
+            const label = document.createElement('label');
+            label.className = 'form-check-label';
+            label.htmlFor = 'tag_' + tag.tagId;
+            label.textContent = tag.tagName;
+            
+            wrapper.appendChild(checkbox);
+            wrapper.appendChild(label);
+            container.appendChild(wrapper);
         });
     }
 
@@ -446,7 +460,7 @@
         document.getElementById('suggestedTagsContainer').innerHTML = '';
         
         // Clear tag selection
-        Array.from(document.getElementById('newsTags').options).forEach(opt => opt.selected = false);
+        document.querySelectorAll('.tag-checkbox').forEach(cb => cb.checked = false);
         
         newsModal.show();
     }
@@ -474,8 +488,8 @@
         
         // Set tags
         const articleTagIds = (article.tags || []).map(t => t.tagId);
-        Array.from(document.getElementById('newsTags').options).forEach(opt => {
-            opt.selected = articleTagIds.includes(parseInt(opt.value));
+        document.querySelectorAll('.tag-checkbox').forEach(cb => {
+            cb.checked = articleTagIds.includes(parseInt(cb.value));
         });
         
         newsModal.show();
@@ -499,8 +513,8 @@
         const imageFile = document.getElementById('newsImage').files[0];
         
         // Get selected tags
-        const tagSelect = document.getElementById('newsTags');
-        const selectedTags = Array.from(tagSelect.selectedOptions).map(opt => parseInt(opt.value));
+        const checkedBoxes = Array.from(document.querySelectorAll('.tag-checkbox:checked'));
+        const selectedTags = checkedBoxes.map(cb => parseInt(cb.value));
 
         if (!title || !headline || !categoryId) {
             showToast('Vui lòng điền đầy đủ thông tin bắt buộc', 'danger');
@@ -526,7 +540,7 @@
         try {
             // FIRE AND FORGET AI LEARNING
             if (selectedTags.length > 0) {
-                const selectedTagNames = Array.from(tagSelect.selectedOptions).map(opt => opt.text);
+                const selectedTagNames = checkedBoxes.map(cb => cb.dataset.tagName);
                 fetch('/api/proxy/ai/learn-tags', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -698,12 +712,9 @@
     }
 
     function selectExistingTag(tagId) {
-        const select = document.getElementById('newsTags');
-        for (let i = 0; i < select.options.length; i++) {
-            if (parseInt(select.options[i].value) === tagId) {
-                select.options[i].selected = true;
-                break;
-            }
+        const checkbox = document.getElementById('tag_' + tagId);
+        if (checkbox) {
+            checkbox.checked = true;
         }
     }
 
@@ -721,9 +732,27 @@
                 tags.push(newTag); // Update memory
                 
                 // Add to multi-select
-                const select = document.getElementById('newsTags');
-                const option = new Option(newTag.tagName, newTag.tagId, false, true);
-                select.add(option);
+                const container = document.getElementById('newsTagsContainer');
+                
+                const wrapper = document.createElement('div');
+                wrapper.className = 'form-check form-check-inline mb-2';
+                
+                const checkbox = document.createElement('input');
+                checkbox.className = 'form-check-input tag-checkbox';
+                checkbox.type = 'checkbox';
+                checkbox.id = 'tag_' + newTag.tagId;
+                checkbox.value = newTag.tagId;
+                checkbox.dataset.tagName = newTag.tagName;
+                checkbox.checked = true;
+                
+                const label = document.createElement('label');
+                label.className = 'form-check-label';
+                label.htmlFor = 'tag_' + newTag.tagId;
+                label.textContent = newTag.tagName;
+                
+                wrapper.appendChild(checkbox);
+                wrapper.appendChild(label);
+                container.appendChild(wrapper);
                 
                 showToast(`Đã tạo nhanh Tag mới: ${tagName}`, 'success');
                 badgeEl.className = 'badge rounded-pill bg-primary tag-chip p-2 pe-auto'; // Transition to Selected State
