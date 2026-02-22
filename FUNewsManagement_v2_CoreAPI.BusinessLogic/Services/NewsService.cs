@@ -17,6 +17,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
         private readonly IWebHostEnvironment _environment;
         private readonly IConfiguration _configuration;
         private readonly IAuditLogService _auditLogService;
+        private readonly INotificationService _notificationService;
+        private readonly IAccountRepository _accountRepository;
 
         public NewsService(
             INewsArticleRepository newsRepository, 
@@ -24,7 +26,9 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             IMapper mapper,
             IWebHostEnvironment environment,
             IConfiguration configuration,
-            IAuditLogService auditLogService)
+            IAuditLogService auditLogService,
+            INotificationService notificationService,
+            IAccountRepository accountRepository)
         {
             _newsRepository = newsRepository;
             _tagRepository = tagRepository;
@@ -32,6 +36,8 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             _environment = environment;
             _configuration = configuration;
             _auditLogService = auditLogService;
+            _notificationService = notificationService;
+            _accountRepository = accountRepository;
         }
 
         public async Task<IEnumerable<NewsArticleDto>> GetAllAsync()
@@ -110,6 +116,11 @@ namespace FUNewsManagement_v2_CoreAPI.BusinessLogic.Services
             var resultDto = _mapper.Map<NewsArticleDto>(article);
 
             await _auditLogService.LogActionAsync("Create", "NewsArticle", article.NewsArticleId, null, resultDto);
+
+            // Fetch createdByName and trigger Realtime Notification
+            var account = await _accountRepository.GetByIdAsync(userId);
+            string createdByName = account?.AccountName ?? "Staff";
+            await _notificationService.SendNewsCreatedNotificationAsync(resultDto.NewsTitle, createdByName, resultDto.CreatedDate ?? DateTime.Now);
 
             return resultDto;
         }

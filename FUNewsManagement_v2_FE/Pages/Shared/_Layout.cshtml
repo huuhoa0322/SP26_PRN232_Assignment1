@@ -30,6 +30,21 @@
                     <ul class="navbar-nav">
                         @if (Context.Session.GetString("UserName") != null)
                         {
+                            <li class="nav-item dropdown me-3">
+                                <a class="nav-link text-dark position-relative mt-1" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-bell-fill fs-5"></i>
+                                    <span id="notificationBadge" class="position-absolute top-25 start-75 translate-middle badge rounded-pill bg-danger" style="display: none; font-size: 0.6em; margin-top: 5px;">
+                                        0
+                                    </span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="notificationDropdown" id="notificationList" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                                    <li><h6 class="dropdown-header fw-bold text-dark">Thông báo <span id="notificationCountHeader" class="badge bg-secondary ms-1">0</span></h6></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <!-- Notifications will be injected here -->
+                                    <li id="noNotificationItem"><span class="dropdown-item text-muted text-center" style="font-size: 0.85em; white-space: normal;">Chưa có thông báo nào.</span></li>
+                                </ul>
+                            </li>
+
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-person-circle"></i> @Context.Session.GetString("UserName")
@@ -123,7 +138,9 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/microsoft/signalr/dist/browser/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/notification.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

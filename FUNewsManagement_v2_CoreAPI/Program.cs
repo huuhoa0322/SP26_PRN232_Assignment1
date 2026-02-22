@@ -49,10 +49,15 @@ namespace FUNewsManagement_v2_CoreAPI
             builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<ITagService, TagService>();
             builder.Services.AddScoped<INewsService, NewsService>();
+            // Use Singleton or Scoped for NotificationService. HubContext is a singleton but Scoped is fine here because NewsService is Scoped.
+            builder.Services.AddScoped<INotificationService, FUNewsManagement_v2_CoreAPI.BusinessLogic.Services.NotificationService>();
             builder.Services.AddScoped<JwtHelper>();
 
             // Configure AutoMapper
             builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
+
+            // Add SignalR Service
+            builder.Services.AddSignalR();
 
             // Configure FluentValidation
             builder.Services.AddFluentValidationAutoValidation();
@@ -183,7 +188,9 @@ namespace FUNewsManagement_v2_CoreAPI
 
             app.UseAuthentication();
             app.UseAuthorization();
+            
             app.MapControllers();
+            app.MapHub<FUNewsManagement_v2_CoreAPI.BusinessLogic.Hubs.NotificationHub>("/hubs/notifications");
 
             app.Run();
         }
