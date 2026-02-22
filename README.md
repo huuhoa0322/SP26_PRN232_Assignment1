@@ -36,7 +36,7 @@
 | Refresh Token Flow | — | ✅ |
 | SignalR (Real-time) | — | ✅ |
 | Chart.js (Dashboard) | — | ✅ |
-| EPPlus (Excel Export) | — | ✅ |
+| ClosedXML (Excel Export) | — | ✅ |
 | Polly (Retry Policy) | — | ✅ |
 | Background Worker | — | ✅ |
 | Google Gemini API (AI) | — | ✅ |
@@ -273,7 +273,7 @@ cd FUNewsManagement_v2_FE && dotnet run             # Frontend
 | **SignalR Notifications** | Real-time via `/hubs/notifications` |
 | **AI Tag Suggestion** | Google Gemini API + keyword extraction + learning cache |
 | **Dashboard & Charts** | Chart.js (Pie, Bar) with OData filtering |
-| **Excel Export** | EPPlus-based analytics report (`.xlsx`) |
+| **Excel Export** | ClosedXML-based analytics report (`.xlsx`) |
 | **Background Worker** | `DataRefreshWorker` — cached data refresh every 6 hours |
 | **Offline Mode** | Local JSON cache + "Offline Mode" banner + disabled CRUD |
 | **Polly Retry Policy** | Automatic retry for failed API calls |
