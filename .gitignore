@@ -365,3 +365,6 @@ FodyWeavers.xsd
 # App settings (protect secrets)
 appsettings.json
 appsettings.Development.json
+
+# App_Data folder (local database files)
+App_Data/
