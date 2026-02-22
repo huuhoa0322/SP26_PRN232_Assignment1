@@ -1,4 +1,4 @@
-# FU News Management System v2 — Distributed & Intelligent
+# FU News Management System v2
 
 ## Project Information
 - **Student**: Do Huu Hoa (HE186716)
@@ -17,7 +17,7 @@
 - **SignalR** (Real-time notifications)
 - **Chart.js** (Dashboard charts)
 - **Bootstrap 5** (UI Framework)
-- **EPPlus** (Excel report export)
+- **ClosedXML** (Excel report export)
 - **Polly** (Retry policy for API calls)
 - **Background Worker** (`IHostedService` — periodic data refresh every 6 hours)
 - **Google Gemini API** (AI tag suggestion)
@@ -26,34 +26,6 @@
 
 The system follows a **distributed architecture** with 4 independent components communicating via **HttpClient**:
 
-```
-┌───────────────────────────────────────────────────────────────────┐
-│                        Frontend (Razor Pages)                     │
-│                   http://localhost:xxxx                            │
-│  ┌──────────┐  ┌──────────────────┐  ┌────────────────────────┐  │
-│  │  Pages/  │  │    Services/     │  │     Workers/           │  │
-│  │  Admin/  │  │  CoreApiService  │  │  DataRefreshWorker     │  │
-│  │  Staff/  │  │  AnalyticsApi..  │  │  (HostedService,       │  │
-│  │  Auth/   │  │  LocalCacheSvc   │  │   refreshes every 6h) │  │
-│  │  News/   │  │                  │  │                        │  │
-│  └──────────┘  └──────────────────┘  └────────────────────────┘  │
-│       │                │                        │                 │
-└───────┼────────────────┼────────────────────────┼─────────────────┘
-        │  HttpClient    │  HttpClient            │  HttpClient
-        ▼                ▼                        ▼
-┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐
-│  Core API    │  │ Analytics API│  │         AI API           │
-│  :5042       │  │  :5002       │  │         :5003            │
-│  (3-Layer)   │  │  (3-Layer)   │  │  Tag Suggestion Service  │
-│  JWT + OData │  │  JWT + OData │  │  Learning Cache Service  │
-│  SignalR Hub │  │  Excel Export│  │  Gemini API Integration  │
-└──────────────┘  └──────────────┘  └──────────────────────────┘
-        │                │
-        ▼                ▼
-   ┌──────────────────────────┐
-   │    SQL Server Database   │
-   │    FUNewsManagement      │
-   └──────────────────────────┘
 ```
 
 ## Project Structure
@@ -127,9 +99,9 @@ HE186716_DoHuuHoa_A01/
 ## Installation Guide
 
 ### 1. System Requirements
-- Visual Studio 2022+
+- Visual Studio 2026
 - .NET 8.0 SDK
-- SQL Server 2019+
+- SQL Server 2025
 
 ### 2. Database Setup
 ```sql
@@ -152,13 +124,13 @@ HE186716_DoHuuHoa_A01/
 ```json
 {
   "CoreApiSettings": {
-    "BaseUrl": "http://localhost:5042"
+    "BaseUrl": "http://localhost:xxxx"
   },
   "AnalyticsApiSettings": {
-    "BaseUrl": "http://localhost:5002"
+    "BaseUrl": "http://localhost:xxxx"
   },
   "AiApiSettings": {
-    "BaseUrl": "http://localhost:5003"
+    "BaseUrl": "http://localhost:xxxx"
   }
 }
 ```
@@ -167,15 +139,15 @@ HE186716_DoHuuHoa_A01/
 Start **all 4 projects** (use Multiple Startup Projects in Visual Studio):
 
 ```bash
-# Core API (port 5042)
+# Core API
 cd FUNewsManagement_v2_CoreAPI
 dotnet run
 
-# Analytics API (port 5002)
+# Analytics API
 cd FUNewsManagement_v2_AnalyticsAPI
 dotnet run
 
-# AI API (port 5003)
+# AI API
 cd FUNewsManagement_v2_AIAPI
 dotnet run
 
@@ -186,7 +158,7 @@ dotnet run
 
 ## API Endpoints
 
-### Core API (`http://localhost:5042`)
+### Core API
 
 #### Authentication
 | Method | Endpoint | Description |
@@ -258,7 +230,7 @@ dotnet run
 
 ---
 
-### Analytics API (`http://localhost:5002`)
+### Analytics API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -268,7 +240,7 @@ dotnet run
 
 ---
 
-### AI API (`http://localhost:5003`)
+### AI API
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -302,7 +274,7 @@ dotnet run
 | **SignalR Notifications** | Real-time notifications via `/hubs/notifications` |
 | **AI Tag Suggestion** | Google Gemini API + keyword extraction + learning cache |
 | **Dashboard & Charts** | Chart.js (Pie, Bar) with OData filtering |
-| **Excel Export** | EPPlus-based analytics report (`xlsx`) |
+| **Excel Export** | ClosedXML-based analytics report (`xlsx`) |
 | **Background Worker** | `DataRefreshWorker` refreshes cached data every 6 hours |
 | **Offline Mode** | Local JSON cache + "Offline Mode" banner + disabled CRUD |
 | **Polly Retry Policy** | Automatic retry for failed API calls |
