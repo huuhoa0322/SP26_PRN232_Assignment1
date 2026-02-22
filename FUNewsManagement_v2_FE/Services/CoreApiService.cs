@@ -18,11 +18,15 @@ namespace FUNewsManagement_v2_FE.Services
     {
         private readonly HttpClient _httpClient;
         private readonly IHttpContextAccessor _contextAccessor;
+        private readonly HttpClient _aiHttpClient;
 
-        public CoreApiService(HttpClient httpClient, IHttpContextAccessor contextAccessor)
+        public CoreApiService(HttpClient httpClient, IHttpContextAccessor contextAccessor, IConfiguration configuration)
         {
             _httpClient = httpClient;
             _contextAccessor = contextAccessor;
+            
+            _aiHttpClient = new HttpClient();
+            _aiHttpClient.BaseAddress = new Uri(configuration["AiApiSettings:BaseUrl"] ?? "http://localhost:5072");
         }
 
         /// <summary>
@@ -526,6 +530,39 @@ namespace FUNewsManagement_v2_FE.Services
                 _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             }
         }
+
+        // ── AI API Endpoints ──────────────────────────────────────────────────
+
+        public async Task<SuggestTagResponse?> SuggestTagsAsync(string content)
+        {
+            try
+            {
+                var request = new { Content = content };
+                var response = await _aiHttpClient.PostAsJsonAsync("/api/ai/suggest-tags", request);
+
+                if (!response.IsSuccessStatusCode) return null;
+
+                return await response.Content.ReadFromJsonAsync<SuggestTagResponse>();
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        public async Task<bool> LearnTagsAsync(List<string> selectedTags)
+        {
+            try
+            {
+                var request = new { SelectedTags = selectedTags };
+                var response = await _aiHttpClient.PostAsJsonAsync("/api/ai/learn-tags", request);
+                return response.IsSuccessStatusCode;
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
     public class ODataResponse<T>
@@ -545,5 +582,11 @@ namespace FUNewsManagement_v2_FE.Services
         public DateTime? CreatedDate { get; set; }
         public string? CategoryName { get; set; }
         public string? ImageUrl { get; set; }
+    }
+
+    public class SuggestTagResponse
+    {
+        public List<string> SuggestedTags { get; set; } = new List<string>();
+        public Dictionary<string, int> TagConfidence { get; set; } = new Dictionary<string, int>(); 
     }
 }

@@ -111,8 +111,16 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label">Nội dung</label>
+                    <label class="form-label d-flex justify-content-between">
+                        <span>Nội dung</span>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="suggestTags()" id="btnSuggestTags">
+                            <i class="bi bi-magic"></i> Suggest Tags (AI)
+                        </button>
+                    </label>
                     <textarea id="newsContent" class="form-control" rows="5"></textarea>
+                    
+                    <!-- Container for Suggested Tags Chips -->
+                    <div id="suggestedTagsContainer" class="mt-2 d-flex flex-wrap gap-2"></div>
                 </div>
                 
                 <div class="row mb-3">
@@ -435,6 +443,7 @@
         document.getElementById('newsStatus').checked = true;
         document.getElementById('newsImage').value = '';
         document.getElementById('currentImagePreview').style.display = 'none';
+        document.getElementById('suggestedTagsContainer').innerHTML = '';
         
         // Clear tag selection
         Array.from(document.getElementById('newsTags').options).forEach(opt => opt.selected = false);
@@ -461,6 +470,7 @@
         } else {
             document.getElementById('currentImagePreview').style.display = 'none';
         }
+        document.getElementById('suggestedTagsContainer').innerHTML = '';
         
         // Set tags
         const articleTagIds = (article.tags || []).map(t => t.tagId);
@@ -514,6 +524,16 @@
         }
 
         try {
+            // FIRE AND FORGET AI LEARNING
+            if (selectedTags.length > 0) {
+                const selectedTagNames = Array.from(tagSelect.selectedOptions).map(opt => opt.text);
+                fetch('/api/proxy/ai/learn-tags', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ SelectedTags: selectedTagNames })
+                }).catch(e => console.error("Error pushing to AI Learning Cache", e));
+            }
+
             const url = isEdit ? `/api/news/${id}` : '/api/news';
             const method = isEdit ? 'PUT' : 'POST';
             
@@ -586,6 +606,137 @@
         }
     }
 
+    // --- AI TAG SUGGESTIONS COMPONENT ---
+    async function suggestTags() {
+        const content = document.getElementById('newsContent').value.trim();
+        const container = document.getElementById('suggestedTagsContainer');
+        const btn = document.getElementById('btnSuggestTags');
+
+        if (!content) {
+            showToast('Vui lòng nhập nội dung bài viết trước khi sử dụng gợi ý AI.', 'info');
+            return;
+        }
+
+        // Loading state
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang gợi ý...';
+        container.innerHTML = '';
+
+        try {
+            const response = await fetch('/api/proxy/ai/suggest-tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Content: content })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const suggestedTagNames = data?.suggestedTags ?? [];
+                const confidenceMap = data?.tagConfidence ?? {};
+
+                if (suggestedTagNames && suggestedTagNames.length > 0) {
+                    renderSuggestedTags(suggestedTagNames, confidenceMap);
+                } else {
+                    container.innerHTML = '<span class="text-muted small">Không tìm thấy từ khóa phù hợp.</span>';
+                }
+            } else {
+                showToast('Không thể kết nối đến AI API.', 'danger');
+            }
+        } catch (error) {
+            console.error('Error suggesting tags:', error);
+            showToast('Lỗi khi gọi AI Suggestion', 'danger');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+    }
+
+    function renderSuggestedTags(tagNames, confidenceMap = {}) {
+        const container = document.getElementById('suggestedTagsContainer');
+        container.innerHTML = '';
+
+        tagNames.forEach(rawName => {
+            const tagName = rawName.trim();
+            // Check if this tag already exists in our master tags list
+            const existingTag = tags.find(t => t.tagName.toLowerCase() === tagName.toLowerCase());
+
+            // Case-insensitive confidence lookup
+            const confKey = Object.keys(confidenceMap).find(k => k.toLowerCase() === tagName.toLowerCase());
+            const confidence = confKey !== undefined ? confidenceMap[confKey] : null;
+            const confBadge = confidence !== null
+                ? ` <span class="badge bg-white bg-opacity-75 text-dark rounded-pill ms-1" style="font-size:0.7em">${confidence}%</span>`
+                : '';
+
+            const badge = document.createElement('span');
+            badge.className = 'badge rounded-pill bg-success tag-chip bg-opacity-75 text-white border border-success p-2 pe-auto';
+            badge.style.cursor = 'pointer';
+
+            let label = tagName;
+            if (!existingTag) {
+                // If it's a completely new tag
+                badge.className = 'badge rounded-pill bg-warning text-dark tag-chip border border-warning p-2 pe-auto';
+                label += ' <small>(Mới)</small>';
+            }
+
+            badge.innerHTML = `<i class="bi bi-magic me-1"></i> ${label}${confBadge}`;
+
+            // On Click
+            badge.onclick = function() {
+                if (existingTag) {
+                    selectExistingTag(existingTag.tagId);
+                    badge.classList.remove('bg-opacity-75', 'bg-success');
+                    badge.classList.add('bg-primary'); // Highlight selected
+                } else {
+                    // Create tag on the fly
+                    createNewTagAndSelect(tagName, badge);
+                }
+            };
+
+            container.appendChild(badge);
+        });
+    }
+
+    function selectExistingTag(tagId) {
+        const select = document.getElementById('newsTags');
+        for (let i = 0; i < select.options.length; i++) {
+            if (parseInt(select.options[i].value) === tagId) {
+                select.options[i].selected = true;
+                break;
+            }
+        }
+    }
+
+    async function createNewTagAndSelect(tagName, badgeEl) {
+        // Quick create tag logic
+        try {
+            const response = await fetch('/api/tags', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ TagName: tagName, Note: 'Created via AI Suggestion' })
+            });
+
+            if (response.ok) {
+                const newTag = await response.json();
+                tags.push(newTag); // Update memory
+                
+                // Add to multi-select
+                const select = document.getElementById('newsTags');
+                const option = new Option(newTag.tagName, newTag.tagId, false, true);
+                select.add(option);
+                
+                showToast(`Đã tạo nhanh Tag mới: ${tagName}`, 'success');
+                badgeEl.className = 'badge rounded-pill bg-primary tag-chip p-2 pe-auto'; // Transition to Selected State
+                badgeEl.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${tagName}`;
+                badgeEl.onclick = null; // Disable clicking again
+            } else {
+                showToast('Lỗi khi tạo Tag mới tự động', 'danger');
+            }
+        } catch(error) {
+            console.error('Error auto-creating tag', error);
+        }
+    }
+
     function showToast(message, type) {
         let toastContainer = document.querySelector('.toast-container');
         if (!toastContainer) {
@@ -596,13 +747,17 @@
         }
 
         const toastId = 'toast-' + Date.now();
-        const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
-        
+        const toastClass = type === 'success' ? 'bg-success text-white'
+            : type === 'info'    ? 'bg-info text-dark'
+            : type === 'warning' ? 'bg-warning text-dark'
+            : 'bg-danger text-white';
+        const closeBtnClass = (type === 'info' || type === 'warning') ? 'btn-close' : 'btn-close btn-close-white';
+
         const toastHTML = `
-            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+            <div id="${toastId}" class="toast align-items-center ${toastClass} border-0" role="alert">
                 <div class="d-flex">
                     <div class="toast-body">${message}</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    <button type="button" class="${closeBtnClass} me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             </div>
         `;
