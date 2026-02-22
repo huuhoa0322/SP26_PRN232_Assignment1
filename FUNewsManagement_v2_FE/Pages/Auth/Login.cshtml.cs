@@ -66,15 +66,8 @@ namespace FUNewsManagement_v2_FE.Pages.Auth
 
             TempData["SuccessMessage"] = $"Đăng nhập thành công! Chào mừng {userName}";
 
-            // Redirect based on role
-            if (role == "Admin")
-            {
-                return RedirectToPage("/Admin/Dashboard/Index");
-            }
-            else
-            {
-                return RedirectToPage("/Index");
-            }
+            // Redirect to Index regardless of role
+            return RedirectToPage("/Index");
         }
     }
 }
