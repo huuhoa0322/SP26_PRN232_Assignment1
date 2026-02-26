@@ -1,3 +1,6 @@
+using FUNewsManagement_v2_FE.Policies;
+using Polly;
+
 namespace FUNewsManagement_v2_FE
 {
     public class Program
@@ -21,19 +24,47 @@ namespace FUNewsManagement_v2_FE
             
             // Add HttpContextAccessor
             builder.Services.AddHttpContextAccessor();
-            
-            // Add HttpClient for CoreApiService
+
+            // ── Polly: stateful circuit-breakers (singleton per named client) ──────
+            // Circuit-breakers must be created once and reused so they correctly track
+            // consecutive failure counts across requests.
+            IAsyncPolicy<HttpResponseMessage>? _coreCircuitBreaker = null;
+            IAsyncPolicy<HttpResponseMessage>? _analyticsCircuitBreaker = null;
+
+            // Add HttpClient for CoreApiService with Polly retry + circuit-breaker
             var coreApiBaseUrl = builder.Configuration["CoreApiSettings:BaseUrl"] ?? "https://localhost:7001";
             builder.Services.AddHttpClient<FUNewsManagement_v2_FE.Services.CoreApiService>(client =>
             {
                 client.BaseAddress = new Uri(coreApiBaseUrl);
+            })
+            // Retry: 3 attempts, exponential back-off 2 s → 4 s → 8 s. Stateless — safe to create per registration.
+            .AddPolicyHandler((sp, _) =>
+                PollyPolicies.GetRetryPolicy(
+                    sp.GetRequiredService<ILogger<FUNewsManagement_v2_FE.Services.CoreApiService>>()))
+            // Circuit-breaker: lazy singleton — opens after 5 failures, stays open 30 s.
+            .AddPolicyHandler((sp, _) =>
+            {
+                if (_coreCircuitBreaker is not null) return _coreCircuitBreaker;
+                var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Polly.CoreApi");
+                return _coreCircuitBreaker = PollyPolicies.GetCircuitBreakerPolicy(logger);
             });
 
-            // Add HttpClient for AnalyticsApiService
+            // Add HttpClient for AnalyticsApiService with Polly retry + circuit-breaker
             var analyticsApiBaseUrl = builder.Configuration["AnalyticsApiSettings:BaseUrl"] ?? "http://localhost:5142";
             builder.Services.AddHttpClient<FUNewsManagement_v2_FE.Services.AnalyticsApiService>(client =>
             {
                 client.BaseAddress = new Uri(analyticsApiBaseUrl);
+            })
+            // Retry: same back-off strategy as CoreApiService.
+            .AddPolicyHandler((sp, _) =>
+                PollyPolicies.GetRetryPolicy(
+                    sp.GetRequiredService<ILogger<FUNewsManagement_v2_FE.Services.AnalyticsApiService>>()))
+            // Circuit-breaker: separate singleton so Analytics faults don't affect Core API.
+            .AddPolicyHandler((sp, _) =>
+            {
+                if (_analyticsCircuitBreaker is not null) return _analyticsCircuitBreaker;
+                var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger("Polly.AnalyticsApi");
+                return _analyticsCircuitBreaker = PollyPolicies.GetCircuitBreakerPolicy(logger);
             });
 
             // Add Cache Service and Background Worker for Offline Mode

@@ -151,6 +151,48 @@
     <script src="~/js/site.js" asp-append-version="true"></script>
     <script src="~/js/notification.js" asp-append-version="true"></script>
 
+    <script>
+        // ── Global fetch interceptor for write operations ──────────────────────
+        // When a POST / PUT / DELETE / PATCH to any /api/* endpoint returns
+        // 503 with { offline: true }, the backend has exhausted all Polly retries
+        // (or the circuit is open).
+        // Management pages already show cached data + an offline banner, so we
+        // do NOT redirect away. Instead we make the banner visible and show a
+        // toast so the user understands why the write operation was rejected.
+        (function () {
+            var _nativeFetch = window.fetch;
+            window.fetch = async function (url, options) {
+                var method = ((options && options.method) || 'GET').toUpperCase();
+                var isWrite = ['POST', 'PUT', 'DELETE', 'PATCH'].indexOf(method) !== -1;
+                try {
+                    var response = await _nativeFetch(url, options);
+                    if (isWrite && response.status === 503) {
+                        var json = await response.clone().json().catch(function () { return null; });
+                        if (json && json.offline === true) {
+                            _notifyOffline();
+                            return response;
+                        }
+                    }
+                    return response;
+                } catch (networkErr) {
+                    // Network-level failure (fetch itself threw — no response at all)
+                    if (isWrite) {
+                        _notifyOffline();
+                    }
+                    throw networkErr;
+                }
+            };
+
+            function _notifyOffline() {
+                // Ensure the offline banner is visible so the user sees why the action failed
+                var banner = document.getElementById('offlineBanner');
+                if (banner) banner.style.display = 'block';
+                // Show toast using the global showToast defined in site.js
+                showToast('Máy chủ API không khả dụng. Thao tác không thể thực hiện — vui lòng thử lại sau khi kết nối được khôi phục.', 'danger');
+            }
+        })();
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -35,11 +35,9 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <label class="form-label">Trạng thái</label>
-                <select id="filterStatus" class="form-select">
+                <label class="form-label">Tác giả</label>
+                <select id="filterAuthor" class="form-select">
                     <option value="">Tất cả</option>
-                    <option value="true">Hoạt động</option>
-                    <option value="false">Không hoạt động</option>
                 </select>
             </div>
             <div class="col-md-2 d-flex gap-2">
@@ -236,11 +234,11 @@
         const start  = document.getElementById('startDate').value;
         const end    = document.getElementById('endDate').value;
         const cat    = document.getElementById('filterCategory').value;
-        const status = document.getElementById('filterStatus').value;
+        const author = document.getElementById('filterAuthor').value;
         if (start) parts.push(`CreatedDate ge ${start}T00:00:00Z`);
         if (end)   parts.push(`CreatedDate le ${end}T23:59:59Z`);
         if (cat)   parts.push(`CategoryId eq ${cat}`);
-        if (status !== '') parts.push(`NewsStatus eq ${status}`);
+        if (author) parts.push(`AuthorName eq '${author}'`);
         return parts.join(' and ');
     }
 
@@ -277,6 +275,7 @@
             renderCategoryChart(data);
             renderStatusChart(data);
             populateCategoryFilter(data);
+            populateAuthorFilter(data);
         } catch (e) {
             console.error('Dashboard load error:', e);
             showToast('Không thể tải dữ liệu. Kiểm tra Analytics API.', false);
@@ -428,6 +427,16 @@
             .sort((a,b)=>(a[1]||'').localeCompare(b[1]||''));
         sel.innerHTML = '<option value="">Tất cả</option>' +
             cats.map(([id,name])=>`<option value="${id}"${id==current?' selected':''}>${name}</option>`).join('');
+    }
+
+    // ── Author filter dropdown ───────────────────────────────────────────────
+    function populateAuthorFilter(items) {
+        const sel = document.getElementById('filterAuthor');
+        const current = sel.value;
+        const authors = [...new Set(items.map(i => i.authorName).filter(n => n))]
+            .sort((a,b) => a.localeCompare(b));
+        sel.innerHTML = '<option value="">Tất cả</option>' +
+            authors.map(name => `<option value="${name}"${name===current?' selected':''}>${name}</option>`).join('');
     }
 
     // ── Trending (client-side pagination, 10/trang) ───────────────────────────

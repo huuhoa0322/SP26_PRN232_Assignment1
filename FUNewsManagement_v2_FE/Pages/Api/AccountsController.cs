@@ -10,7 +10,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountsController : ControllerBase
+    public class AccountsController : BaseApiController
     {
         private readonly CoreApiService _apiService;
         private readonly ILogger<AccountsController> _logger;
@@ -74,6 +74,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in CreateAccount");
                 return BadRequest(ex.Message);
             }
@@ -103,6 +104,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in UpdateAccount");
                 return BadRequest(ex.Message);
             }
@@ -121,6 +123,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in DeleteAccount");
                 return BadRequest(ex.Message);
             }

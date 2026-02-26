@@ -6,7 +6,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class TagsController : ControllerBase
+    public class TagsController : BaseApiController
     {
         private readonly CoreApiService _apiService;
         private readonly ILogger<TagsController> _logger;
@@ -75,6 +75,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in CreateTag");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }
@@ -91,6 +92,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in UpdateTag");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }
@@ -107,6 +109,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in DeleteTag");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }

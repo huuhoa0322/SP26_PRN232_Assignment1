@@ -55,6 +55,17 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         {
             try
             {
+                if (request.ImageFile != null)
+                {
+                    if (request.ImageFile.Length > 5 * 1024 * 1024)
+                        return BadRequest(new { message = "File ảnh upload không được vượt quá 5MB." });
+                    
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                    var extension = System.IO.Path.GetExtension(request.ImageFile.FileName).ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                        return BadRequest(new { message = "Chỉ được upload file dạng ảnh (.jpg, .jpeg, .png, .gif, .webp)." });
+                }
+
                 var userId = GetCurrentUserId();
                 var created = await _newsService.CreateAsync(request, userId);
                 return CreatedAtAction(nameof(Get), new { id = created.NewsArticleId }, created);
@@ -73,6 +84,17 @@ namespace FUNewsManagement_v2_CoreAPI.Controllers
         {
             try
             {
+                if (request.ImageFile != null)
+                {
+                    if (request.ImageFile.Length > 5 * 1024 * 1024)
+                        return BadRequest(new { message = "File ảnh upload không được vượt quá 5MB." });
+                    
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                    var extension = System.IO.Path.GetExtension(request.ImageFile.FileName).ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                        return BadRequest(new { message = "Chỉ được upload file dạng ảnh (.jpg, .jpeg, .png, .gif, .webp)." });
+                }
+
                 var userId = GetCurrentUserId();
                 var updated = await _newsService.UpdateAsync(id, request, userId);
                 if (updated == null) return NotFound(new { message = "Bài viết không tồn tại" });

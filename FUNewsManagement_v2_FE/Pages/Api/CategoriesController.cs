@@ -7,7 +7,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CategoriesController : ControllerBase
+    public class CategoriesController : BaseApiController
     {
         private readonly CoreApiService _apiService;
         private readonly ILogger<CategoriesController> _logger;
@@ -76,6 +76,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in CreateCategory");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }
@@ -92,6 +93,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in UpdateCategory");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }
@@ -108,6 +110,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in DeleteCategory");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }
@@ -124,6 +127,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in ToggleStatus");
+                if (IsOfflineException(ex)) return OfflineResult();
                 return BadRequest(ex.Message);
             }
         }

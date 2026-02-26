@@ -6,7 +6,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class NewsController : ControllerBase
+    public class NewsController : BaseApiController
     {
         private readonly CoreApiService _apiService;
         private readonly ILogger<NewsController> _logger;
@@ -89,6 +89,14 @@ namespace FUNewsManagement_v2_FE.Pages.Api
 
                 if (model.ImageFile != null)
                 {
+                    if (model.ImageFile.Length > 5 * 1024 * 1024)
+                        return BadRequest("File ảnh upload không được vượt quá 5MB.");
+                    
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                    var extension = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                        return BadRequest("Chỉ được upload file dạng ảnh (.jpg, .jpeg, .png, .gif, .webp).");
+
                     imageStream = model.ImageFile.OpenReadStream();
                     imageName = model.ImageFile.FileName;
                 }
@@ -102,6 +110,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in CreateNews");
                 return BadRequest(ex.Message);
             }
@@ -128,6 +137,14 @@ namespace FUNewsManagement_v2_FE.Pages.Api
 
                 if (model.ImageFile != null)
                 {
+                    if (model.ImageFile.Length > 5 * 1024 * 1024)
+                        return BadRequest("File ảnh upload không được vượt quá 5MB.");
+                    
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" };
+                    var extension = Path.GetExtension(model.ImageFile.FileName).ToLowerInvariant();
+                    if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+                        return BadRequest("Chỉ được upload file dạng ảnh gốc (.jpg, .jpeg, .png, .gif, .webp).");
+
                     imageStream = model.ImageFile.OpenReadStream();
                     imageName = model.ImageFile.FileName;
                 }
@@ -141,6 +158,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in UpdateNews");
                 return BadRequest(ex.Message);
             }
@@ -157,6 +175,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in DeleteNews");
                 return BadRequest(ex.Message);
             }
@@ -173,6 +192,7 @@ namespace FUNewsManagement_v2_FE.Pages.Api
             }
             catch (Exception ex)
             {
+                if (IsOfflineException(ex)) return OfflineResult();
                 _logger.LogError(ex, "Error in DuplicateNews");
                 return BadRequest(ex.Message);
             }

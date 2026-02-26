@@ -551,6 +551,14 @@
         });
         
         if (imageFile) {
+            if (imageFile.size > 5 * 1024 * 1024) {
+                showToast('File ảnh upload không được vượt quá 5MB.', 'danger');
+                return;
+            }
+            if (!imageFile.type.startsWith('image/')) {
+                showToast('Chỉ được upload file dạng ảnh.', 'danger');
+                return;
+            }
             formData.append('ImageFile', imageFile);
         }
 
