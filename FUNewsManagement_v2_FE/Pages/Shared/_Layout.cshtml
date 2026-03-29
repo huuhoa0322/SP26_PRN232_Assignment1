@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
 </head>
 <body>
-    <header>
+    <header class="sticky-top bg-white">
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container">
                 <a class="navbar-brand" asp-page="/Index">FU News v2</a>
@@ -82,15 +82,11 @@
     </header>
 
     <div class="container">
-        <main role="main" class="pb-3">
-            <!-- Offline Banner -->
+        <main role="main" class="pb-5">
             @{
                 var isOfflineMode = Context.Items.ContainsKey("IsOfflineMode") && (bool)Context.Items["IsOfflineMode"];
-                var displayStyle = isOfflineMode ? "block" : "none";
+                var displayStyle = isOfflineMode ? "flex" : "none";
             }
-            <div id="offlineBanner" class="alert alert-warning text-center fw-bold sticky-top z-3" role="alert" style="display: @displayStyle;">
-                <i class="bi bi-wifi-off me-2"></i> ⚠️ Offline Mode: Bạn đang xem dữ liệu offline. Kết nối đến máy chủ bị gián đoạn. Các chức năng tạm thời bị vô hiệu hóa.
-            </div>
 
             <!-- Toast Container -->
             <div id="toastContainer" class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1100;"></div>
@@ -139,11 +135,30 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted text-center py-3 mt-5">
-        <div class="container">
-            <small>&copy; 2026 - FU News Management v2 | Assignment 02</small>
-        </div>
+    <footer class="border-top footer text-muted text-center py-1 bg-white"
+            style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 1019;">
+        <small>&copy; 2026 - FU News Management v2</small>
     </footer>
+
+    <!-- Offline Banner — fixed bottom-left, above footer -->
+    <div id="offlineBanner"
+         class="align-items-center gap-2 shadow-sm"
+         role="alert"
+         style="display: @displayStyle;
+                position: fixed;
+                bottom: 36px;
+                left: 16px;
+                z-index: 1040;
+                background: #fff3cd;
+                border: 1px solid #ffc107;
+                border-radius: 8px;
+                padding: 6px 12px;
+                font-size: 0.82rem;
+                color: #664d03;
+                max-width: 300px;">
+        <i class="bi bi-wifi-off me-1"></i>
+        <span>Mất kết nối – Đang xem dữ liệu offline</span>
+    </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
@@ -184,11 +199,9 @@
             };
 
             function _notifyOffline() {
-                // Ensure the offline banner is visible so the user sees why the action failed
                 var banner = document.getElementById('offlineBanner');
-                if (banner) banner.style.display = 'block';
-                // Show toast using the global showToast defined in site.js
-                showToast('Máy chủ API không khả dụng. Thao tác không thể thực hiện — vui lòng thử lại sau khi kết nối được khôi phục.', 'danger');
+                if (banner) banner.style.display = 'flex';
+                showToast('Máy chủ API không khả dụng. Thao tác không thể thực hiện, vui lòng thử lại sau khi kết nối được khôi phục.', 'danger');
             }
         })();
     </script>

@@ -37,10 +37,16 @@ namespace FUNewsManagement_v2_FE
             {
                 client.BaseAddress = new Uri(coreApiBaseUrl);
             })
-            // Retry: 3 attempts, exponential back-off 2 s → 4 s → 8 s. Stateless — safe to create per registration.
-            .AddPolicyHandler((sp, _) =>
-                PollyPolicies.GetRetryPolicy(
-                    sp.GetRequiredService<ILogger<FUNewsManagement_v2_FE.Services.CoreApiService>>()))
+            // Retry: only for write operations (POST/PUT/DELETE/PATCH).
+            // GET requests must NOT retry — fail fast so the cache fallback
+            // shows cached data immediately instead of waiting ~14 s.
+            .AddPolicyHandler((sp, request) =>
+            {
+                if (request.Method == HttpMethod.Get)
+                    return Policy.NoOpAsync<HttpResponseMessage>();
+                return PollyPolicies.GetRetryPolicy(
+                    sp.GetRequiredService<ILogger<FUNewsManagement_v2_FE.Services.CoreApiService>>());
+            })
             // Circuit-breaker: lazy singleton — opens after 5 failures, stays open 30 s.
             .AddPolicyHandler((sp, _) =>
             {
@@ -55,10 +61,14 @@ namespace FUNewsManagement_v2_FE
             {
                 client.BaseAddress = new Uri(analyticsApiBaseUrl);
             })
-            // Retry: same back-off strategy as CoreApiService.
-            .AddPolicyHandler((sp, _) =>
-                PollyPolicies.GetRetryPolicy(
-                    sp.GetRequiredService<ILogger<FUNewsManagement_v2_FE.Services.AnalyticsApiService>>()))
+            // Retry: only for write operations — GET fails fast to cache.
+            .AddPolicyHandler((sp, request) =>
+            {
+                if (request.Method == HttpMethod.Get)
+                    return Policy.NoOpAsync<HttpResponseMessage>();
+                return PollyPolicies.GetRetryPolicy(
+                    sp.GetRequiredService<ILogger<FUNewsManagement_v2_FE.Services.AnalyticsApiService>>());
+            })
             // Circuit-breaker: separate singleton so Analytics faults don't affect Core API.
             .AddPolicyHandler((sp, _) =>
             {

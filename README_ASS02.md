@@ -26,11 +26,33 @@
 
 The system follows a **distributed architecture** with 4 independent components communicating via **HttpClient**:
 
+- **FUNewsManagement_v2_FE (Frontend)**: Acts as the main user interface (Razor Pages). It consumes services from the Core, Analytics, and AI APIs.
+- **FUNewsManagement_v2_CoreAPI**: Handles authentication, account management, news articles, categories, tags, and audit logs. It connects directly to the SQL Server database.
+- **FUNewsManagement_v2_AnalyticsAPI**: Dedicated service for dashboard statistics, trending data, and Excel report generation. It also connects to the SQL Server database for data retrieval.
+- **FUNewsManagement_v2_AIAPI**: Provides AI-powered tag suggestions by integrating with the Google Gemini API.
+
+```mermaid
+graph TD
+    FE[Frontend]
+    CoreAPI[Core API]
+    AnalyticsAPI[Analytics API]
+    AIAPI[AI API]
+    DB[(SQL Server Database)]
+    Gemini[Google Gemini API]
+    
+    FE -- HttpClient --> CoreAPI
+    FE -- HttpClient --> AnalyticsAPI
+    FE -- HttpClient --> AIAPI
+    
+    CoreAPI -- EF Core --> DB
+    AnalyticsAPI -- EF Core --> DB
+    
+    AIAPI -- HTTPS Request --> Gemini
 ```
 
 ## Project Structure
 
-```
+```text
 HE186716_DoHuuHoa_A01/
 │
 ├── FUNewsManagement_v2_CoreAPI/               # Core API (Web API)
